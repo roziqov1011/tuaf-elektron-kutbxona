@@ -1,0 +1,6 @@
+{
+  "name": "Registon Akademik — Universitet Elektron Kutubxonasi",
+  "description": "Jahonning top-10 universitet kutubxonalari standartlariga javob beruvchi ko'p tilli (O'zbek, Ingliz, Rus) elektron kutubxona, dissertatsiyalar repozitoriyasi, mediateka va o'quv zali band qilish tizimi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
