@@ -209,3 +209,240 @@ export function validateNewResourceForm(
   }
   return { valid: true };
 }
+
+export function addDaysToDateString(dateStr: string, days: number): string {
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    return dateStr;
+  }
+  const [year, month, day] = parts;
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(dt.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function calculateDaysBetween(
+  startDateStr: string,
+  endDateStr: string
+): number {
+  const startParts = startDateStr.split('-').map(Number);
+  const endParts = endDateStr.split('-').map(Number);
+  if (
+    startParts.length !== 3 ||
+    endParts.length !== 3 ||
+    startParts.some(Number.isNaN) ||
+    endParts.some(Number.isNaN)
+  ) {
+    return 14;
+  }
+  const startUtc = Date.UTC(startParts[0], startParts[1] - 1, startParts[2]);
+  const endUtc = Date.UTC(endParts[0], endParts[1] - 1, endParts[2]);
+  const diffDays = Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+  return Math.max(1, diffDays);
+}
+
+export function generateBookingTicketCode(
+  prefix: 'KTB' | 'KITOB' | 'JOY',
+  seedNum?: number
+): string {
+  const num =
+    seedNum !== undefined
+      ? (Math.abs(seedNum) % 9000) + 1000
+      : Math.floor(1000 + Math.random() * 9000);
+  return `TUAF-${prefix}-${num}`;
+}
+
+/**
+ * Generates a deterministic 21x21 QR-Code Version 1 boolean matrix
+ * with standard 7x7 finder patterns in top-left, top-right, and bottom-left,
+ * timing patterns, and payload-derived data cells.
+ */
+export function generateQrMatrix(payload: string, size = 21): boolean[][] {
+  const matrix: boolean[][] = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => false)
+  );
+  const reserved: boolean[][] = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => false)
+  );
+
+  const placeFinderPattern = (r0: number, c0: number) => {
+    for (let dr = -1; dr <= 7; dr++) {
+      for (let dc = -1; dc <= 7; dc++) {
+        const r = r0 + dr;
+        const c = c0 + dc;
+        if (r < 0 || r >= size || c < 0 || c >= size) continue;
+        reserved[r][c] = true;
+        const isBorder =
+          dr >= 0 &&
+          dr <= 6 &&
+          dc >= 0 &&
+          dc <= 6 &&
+          (dr === 0 || dr === 6 || dc === 0 || dc === 6);
+        const isInner = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
+        matrix[r][c] = isBorder || isInner;
+      }
+    }
+  };
+
+  placeFinderPattern(0, 0);
+  placeFinderPattern(0, size - 7);
+  placeFinderPattern(size - 7, 0);
+
+  // Timing patterns
+  for (let i = 8; i < size - 8; i++) {
+    reserved[6][i] = true;
+    matrix[6][i] = i % 2 === 0;
+    reserved[i][6] = true;
+    matrix[i][6] = i % 2 === 0;
+  }
+
+  // Deterministic hash stream from payload
+  const cleanPayload = payload || 'TUAF-PASS-2026';
+  let seed = 2166136261;
+  for (let i = 0; i < cleanPayload.length; i++) {
+    seed ^= cleanPayload.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+
+  let step = 1;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (reserved[r][c]) continue;
+      const charCode = cleanPayload.charCodeAt(step % cleanPayload.length);
+      const val =
+        (Math.imul(seed ^ (r * 31 + c * 17 + charCode * step), 2654435761) >>>
+          0) %
+        10;
+      matrix[r][c] = val < 5;
+      step++;
+    }
+  }
+
+  return matrix;
+}
+
+export function findReservationsByQuery<
+  L extends {
+    ticketCode?: string;
+    studentName: string;
+    studentId: string;
+    callNumber: string;
+    resourceTitle: { uz: string; ru: string; en: string };
+  },
+  S extends {
+    ticketCode?: string;
+    studentName: string;
+    studentId: string;
+    seatCode: string;
+    hallName: { uz: string; ru: string; en: string };
+  },
+>(
+  query: string,
+  loans: L[],
+  seats: S[]
+): { matchedLoans: L[]; matchedSeats: S[] } {
+  const q = query.trim().toLowerCase().replace(/^#/, '');
+  if (!q) {
+    return { matchedLoans: loans, matchedSeats: seats };
+  }
+
+  const matchedLoans = loans.filter(
+    (l) =>
+      (l.ticketCode && l.ticketCode.toLowerCase().includes(q)) ||
+      l.studentName.toLowerCase().includes(q) ||
+      l.studentId.toLowerCase().includes(q) ||
+      l.callNumber.toLowerCase().includes(q) ||
+      l.resourceTitle.uz.toLowerCase().includes(q) ||
+      l.resourceTitle.ru.toLowerCase().includes(q) ||
+      l.resourceTitle.en.toLowerCase().includes(q)
+  );
+
+  const matchedSeats = seats.filter(
+    (s) =>
+      (s.ticketCode && s.ticketCode.toLowerCase().includes(q)) ||
+      s.studentName.toLowerCase().includes(q) ||
+      s.studentId.toLowerCase().includes(q) ||
+      s.seatCode.toLowerCase().includes(q) ||
+      s.hallName.uz.toLowerCase().includes(q) ||
+      s.hallName.ru.toLowerCase().includes(q) ||
+      s.hallName.en.toLowerCase().includes(q)
+  );
+
+  return { matchedLoans, matchedSeats };
+}
+
+export function quickSearchSpotlight(
+  resources: LibraryResource[],
+  query: string,
+  lang: Language,
+  limit = 6
+): LibraryResource[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return resources.slice(0, limit);
+  }
+
+  const scored = resources
+    .map((item) => {
+      let score = 0;
+      const titleLang = item.title[lang].toLowerCase();
+      const titleAll =
+        `${item.title.uz} ${item.title.ru} ${item.title.en}`.toLowerCase();
+      const authorsStr = item.authors.join(' ').toLowerCase();
+      const udcStr = item.udc.toLowerCase();
+      const progStr = (item.programCode || '').toLowerCase();
+      const kwStr = item.keywords.join(' ').toLowerCase();
+
+      if (titleLang.startsWith(q)) score += 100;
+      else if (titleLang.includes(q)) score += 70;
+      else if (titleAll.includes(q)) score += 55;
+
+      if (authorsStr.includes(q)) score += 50;
+      if (udcStr.includes(q) || progStr.includes(q)) score += 45;
+      if (kwStr.includes(q)) score += 30;
+      if (item.doi.toLowerCase().includes(q)) score += 40;
+
+      return { item, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score || b.item.citationsCount - a.item.citationsCount
+    );
+
+  return scored.slice(0, limit).map((entry) => entry.item);
+}
+
+export function splitChapterIntoSpreadPages(
+  chapterContent: string,
+  abstractText: string
+): { leftPageParagraphs: string[]; rightPageParagraphs: string[] } {
+  const cleanChapter = (chapterContent || '').trim();
+  const cleanAbstract = (abstractText || '').trim();
+
+  const sentences = cleanChapter
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 2) {
+    return {
+      leftPageParagraphs: [cleanChapter],
+      rightPageParagraphs: [cleanAbstract || cleanChapter],
+    };
+  }
+
+  const mid = Math.ceil(sentences.length / 2);
+  const firstHalf = sentences.slice(0, mid).join(' ');
+  const secondHalf = sentences.slice(mid).join(' ');
+
+  return {
+    leftPageParagraphs: [firstHalf],
+    rightPageParagraphs: [secondHalf, cleanAbstract].filter(Boolean),
+  };
+}
+
+

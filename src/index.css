@@ -49,3 +49,350 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* =========================================================
+   1. 2-Row Opposite-Direction Marquee Slider Animations
+   ========================================================= */
+@keyframes tuafScrollLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes tuafScrollRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-tuaf-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: tuafScrollLeft 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-tuaf-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: tuafScrollRight 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-tuaf-marquee-left:hover,
+.animate-tuaf-marquee-right:hover {
+  animation-play-state: paused;
+}
+
+/* =========================================================
+   2. Word, Headline & Typographic Animations
+   ========================================================= */
+@keyframes tuafTextRise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tuafTextShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.tuaf-word-reveal {
+  animation: tuafTextRise 0.78s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tuaf-delay-1 {
+  animation-delay: 90ms;
+}
+.tuaf-delay-2 {
+  animation-delay: 180ms;
+}
+.tuaf-delay-3 {
+  animation-delay: 270ms;
+}
+.tuaf-delay-4 {
+  animation-delay: 360ms;
+}
+
+.tuaf-gold-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #bae6fd 28%,
+    #fde68a 52%,
+    #ffffff 78%,
+    #bae6fd 100%
+  );
+  background-size: 220% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: tuafTextShimmer 6.5s ease-in-out infinite;
+}
+
+.tuaf-section-heading {
+  position: relative;
+  display: inline-block;
+  transition: color 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tuaf-section-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 38%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b8860b 0%, #0099b5 100%);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+section:hover .tuaf-section-heading::after {
+  width: 100%;
+}
+
+.tuaf-animated-title {
+  background-image: linear-gradient(90deg, #b8860b, #0099b5);
+  background-size: 0% 2px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  transition:
+    background-size 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.28s ease;
+}
+
+.tuaf-card-interactive:hover .tuaf-animated-title {
+  color: #0b2d5c;
+  background-size: 100% 2px;
+}
+
+/* =========================================================
+   3. Card Reveal, Hover Lift, Sheen & Cover Zoom Animations
+   ========================================================= */
+@keyframes tuafCardReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.tuaf-card-reveal {
+  animation: tuafCardReveal 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tuaf-card-interactive {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+.tuaf-card-interactive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 65%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(197, 155, 39, 0.09) 48%,
+    rgba(56, 189, 248, 0.08) 55%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  transition: left 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tuaf-card-interactive:hover {
+  transform: translate3d(0, -6px, 0);
+  border-color: #b8860b;
+  box-shadow:
+    0 18px 34px -14px rgba(15, 35, 66, 0.16),
+    0 6px 14px -6px rgba(184, 134, 11, 0.14);
+}
+
+.tuaf-card-interactive:hover::before {
+  left: 145%;
+}
+
+.tuaf-cover-zoom {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.tuaf-card-interactive:hover .tuaf-cover-zoom {
+  transform: scale(1.065);
+}
+
+.tuaf-slider-chip {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.tuaf-slider-chip:hover {
+  transform: translate3d(0, -3px, 0) scale(1.02);
+  box-shadow: 0 10px 22px -8px rgba(15, 35, 66, 0.16);
+}
+
+/* =========================================================
+   4. 3D Hardcover Book & Living Library Shelf Styles
+   ========================================================= */
+.tuaf-3d-book-stage {
+  perspective: 1100px;
+}
+
+.tuaf-3d-book {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(-8deg) rotateX(2deg);
+  transition:
+    transform 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    -8px 12px 24px -6px rgba(4, 30, 65, 0.35),
+    4px 0 0 0 #f5f0e3,
+    7px 2px 0 0 #e6decb,
+    10px 4px 0 0 #d5cbb4,
+    12px 6px 16px rgba(15, 35, 66, 0.24);
+  will-change: transform;
+}
+
+.tuaf-3d-book-stage:hover .tuaf-3d-book,
+.tuaf-card-interactive:hover .tuaf-3d-book {
+  transform: rotateY(-16deg) rotateX(4deg) translate3d(2px, -6px, 10px);
+  box-shadow:
+    -14px 20px 32px -6px rgba(4, 30, 65, 0.42),
+    5px 1px 0 0 #fbf9f5,
+    9px 3px 0 0 #ebe4d3,
+    13px 5px 0 0 #d8ceba,
+    16px 8px 22px rgba(184, 134, 11, 0.26);
+}
+
+/* Left Hardcover Spine Hinge Crease */
+.tuaf-book-spine-crease {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.52) 0%,
+    rgba(255, 255, 255, 0.24) 28%,
+    rgba(0, 0, 0, 0.35) 58%,
+    transparent 100%
+  );
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Warm Library Oak & Brass Shelf Pedestal */
+.tuaf-library-shelf-plank {
+  background: linear-gradient(
+    180deg,
+    #5c3a21 0%,
+    #3d2514 48%,
+    #26150a 100%
+  );
+  border-top: 2px solid #c59b27;
+  box-shadow:
+    0 10px 22px -4px rgba(15, 35, 66, 0.32),
+    inset 0 2px 4px rgba(255, 232, 179, 0.25);
+}
+
+/* =========================================================
+   5. Two-Page Open Book Spread Reader & Page Turn Animations
+   ========================================================= */
+@keyframes tuafPageFlipNext {
+  0% {
+    opacity: 0.35;
+    transform: perspective(1400px) rotateY(14deg) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes tuafPageFlipPrev {
+  0% {
+    opacity: 0.35;
+    transform: perspective(1400px) rotateY(-14deg) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) scale(1);
+  }
+}
+
+.tuaf-page-flip-next {
+  animation: tuafPageFlipNext 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tuaf-page-flip-prev {
+  animation: tuafPageFlipPrev 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Realistic stacked pages outer frame for the Open Book Reader */
+.tuaf-open-book-shell {
+  box-shadow:
+    0 26px 55px -12px rgba(0, 0, 0, 0.55),
+    -5px 0 0 0 #efe9da,
+    -9px 2px 0 0 #dfd7c4,
+    5px 0 0 0 #efe9da,
+    9px 2px 0 0 #dfd7c4,
+    0 6px 0 0 #cbbda2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tuaf-marquee-left,
+  .animate-tuaf-marquee-right,
+  .tuaf-word-reveal,
+  .tuaf-gold-shimmer-text,
+  .tuaf-card-reveal,
+  .tuaf-page-flip-next,
+  .tuaf-page-flip-prev {
+    animation: none !important;
+  }
+  .tuaf-card-interactive,
+  .tuaf-cover-zoom,
+  .tuaf-slider-chip,
+  .tuaf-3d-book {
+    transition: none !important;
+  }
+}
+

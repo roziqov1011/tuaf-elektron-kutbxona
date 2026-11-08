@@ -4,13 +4,15 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, X } from 'lucide-react';
 import {
+  AdminStaffProfile,
   BookLoanReservation,
   CatalogFilterState,
   Language,
   LibraryResource,
   PersonalNote,
+  QrPassTicketItem,
   SeatReservation,
   StudentProfile,
 } from './types/library';
@@ -24,7 +26,12 @@ import {
   INITIAL_SEAT_RESERVATIONS,
 } from './data/seedLibraryData';
 import { FAMOUS_BOOKS } from './data/famousBooks';
-import { filterCatalogItems } from './utils/libraryLogic';
+import {
+  addDaysToDateString,
+  calculateDaysBetween,
+  filterCatalogItems,
+  generateBookingTicketCode,
+} from './utils/libraryLogic';
 import { downloadResourcePdf } from './utils/pdfGenerator';
 import { ActiveTab, TopBar } from './components/TopBar';
 import { CatalogView } from './components/CatalogView';
@@ -34,8 +41,16 @@ import { ReadingHallView } from './components/ReadingHallView';
 import { FamousBooksView } from './components/FamousBooksView';
 import { LoginPage } from './components/LoginPage';
 import { CabinetAdminView } from './components/CabinetAdminView';
+import { AdminPortalView } from './components/AdminPortalView';
 import { ReaderModal } from './components/ReaderModal';
 import { CitationModal } from './components/CitationModal';
+import {
+  BookReservationModal,
+  BookReservationPayload,
+} from './components/BookReservationModal';
+import { QrTicketModal } from './components/QrTicketModal';
+import { SpotlightSearchModal } from './components/SpotlightSearchModal';
+import { StudentRoadmapModal } from './components/StudentRoadmapModal';
 
 const DEFAULT_FILTERS: CatalogFilterState = {
   query: '',
@@ -71,19 +86,47 @@ export default function App() {
       }
     }
   );
+
+  const [adminStaff, setAdminStaff] = useState<AdminStaffProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('tuaf_admin_staff_v1');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSpotlightModal, setShowSpotlightModal] = useState(false);
+  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
   const [loginReasonMessage, setLoginReasonMessage] = useState<string | null>(
     null
   );
   const [pendingPdfBook, setPendingPdfBook] = useState<LibraryResource | null>(
     null
   );
+  const [pendingReserveBook, setPendingReserveBook] =
+    useState<LibraryResource | null>(null);
+  const [reservingBook, setReservingBook] = useState<LibraryResource | null>(
+    null
+  );
+  const [qrTicketItem, setQrTicketItem] = useState<QrPassTicketItem | null>(
+    null
+  );
+
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(
     () => new Set()
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [resources] = useState<LibraryResource[]>(COMBINED_INITIAL_RESOURCES);
+  const [resources, setResources] = useState<LibraryResource[]>(() => {
+    try {
+      const saved = localStorage.getItem('tuaf_resources_v2');
+      return saved ? JSON.parse(saved) : COMBINED_INITIAL_RESOURCES;
+    } catch {
+      return COMBINED_INITIAL_RESOURCES;
+    }
+  });
 
   const [loans, setLoans] = useState<BookLoanReservation[]>(() => {
     try {
@@ -131,6 +174,14 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem('tuaf_resources_v2', JSON.stringify(resources));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [resources]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem('tuaf_loans_v2', JSON.stringify(loans));
     } catch {
       // Ignore storage quota errors
@@ -155,7 +206,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toastMessage) return;
-    const timer = setTimeout(() => setToastMessage(null), 4000);
+    const timer = setTimeout(() => setToastMessage(null), 4500);
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
@@ -197,6 +248,13 @@ export default function App() {
       setToastMessage(
         `Xush kelibsiz, ${profile.fullName}! "${fileName}" PDF fayli yuklab olindi.`
       );
+    } else if (pendingReserveBook) {
+      const bookToOpen = pendingReserveBook;
+      setPendingReserveBook(null);
+      setReservingBook(bookToOpen);
+      setToastMessage(
+        `Xush kelibsiz, ${profile.fullName}! Endi kitobni band qilish muddatini tanlang.`
+      );
     } else {
       setToastMessage(
         `Xush kelibsiz, ${profile.fullName} (HEMIS: ${profile.hemisId})!`
@@ -220,9 +278,32 @@ export default function App() {
     );
   };
 
+  const handleAdminLogin = (staff: AdminStaffProfile) => {
+    setAdminStaff(staff);
+    try {
+      localStorage.setItem('tuaf_admin_staff_v1', JSON.stringify(staff));
+    } catch {
+      // Ignore storage errors
+    }
+    setToastMessage(
+      `Xush kelibsiz, ${staff.fullName}! ARM Kutubxonachi va Admin paneli faollashtirildi.`
+    );
+  };
+
+  const handleAdminLogout = () => {
+    setAdminStaff(null);
+    try {
+      localStorage.removeItem('tuaf_admin_staff_v1');
+    } catch {
+      // Ignore storage errors
+    }
+    setToastMessage('ARM Admin va kutubxonachi tizimidan chiqildi.');
+  };
+
   const handleDownloadPdf = (resource: LibraryResource) => {
     if (!studentProfile) {
       setPendingPdfBook(resource);
+      setPendingReserveBook(null);
       setLoginReasonMessage(
         lang === 'ru'
           ? `Для скачивания книги «${resource.title.ru}» в формате PDF войдите в студенческий кабинет.`
@@ -239,27 +320,165 @@ export default function App() {
     setToastMessage(`PDF yuklab olindi: ${fileName}`);
   };
 
-  const handleReserveBook = (resource: LibraryResource) => {
+  const handleOpenBookReservation = (resource: LibraryResource) => {
     if (reservedIds.has(resource.id)) return;
+
+    if (!studentProfile) {
+      setPendingReserveBook(resource);
+      setPendingPdfBook(null);
+      setLoginReasonMessage(
+        lang === 'ru'
+          ? `Для предварительного бронирования книги «${resource.title.ru}» и выбора срока войдите в кабинет студента.`
+          : lang === 'en'
+          ? `Please sign in to your student cabinet to pre-reserve "${resource.title.en}" and select a loan duration.`
+          : `«${resource.title.uz}» kitobini oldindan band qilish va muddatini (3, 7, 14 yoki 30 kun) tanlash uchun talaba kabinetiga kiring.`
+      );
+      setShowLoginModal(true);
+      return;
+    }
+
+    setReservingBook(resource);
+  };
+
+  const handleConfirmBookReservation = (payload: BookReservationPayload) => {
+    const {
+      resource,
+      pickupDate,
+      dueDate,
+      durationDays,
+      format,
+      pickupLocation,
+      note,
+    } = payload;
+
+    if (reservedIds.has(resource.id)) {
+      setReservingBook(null);
+      return;
+    }
+
+    const ticketCode = generateBookingTicketCode('KTB', Date.now());
+
     const newLoan: BookLoanReservation = {
       id: `tuaf-loan-${Date.now()}`,
       resourceId: resource.id,
       resourceTitle: resource.title,
       authors: resource.authors,
-      callNumber: `UDK ${resource.udc}`,
+      callNumber: `${resource.programCode} · UDK ${resource.udc}`,
       studentName: studentProfile
         ? `${studentProfile.fullName} (${studentProfile.programName})`
         : 'Sardorbek Islomov (TUAF Talabasi)',
       studentId: studentProfile
         ? `HEMIS-${studentProfile.hemisId}`
         : 'HEMIS-TUAF-2026-8841',
-      pickupDate: '2026-11-07',
-      dueDate: '2026-11-21',
-      format: resource.openAccess ? 'digital-license' : 'physical-pickup',
-      status: 'active',
+      pickupDate,
+      dueDate,
+      durationDays,
+      ticketCode,
+      pickupLocation,
+      note,
+      format,
+      status: 'ready-for-pickup',
     };
+
     setLoans((prev) => [newLoan, ...prev]);
-    setToastMessage(`"${resource.title[lang]}" kitobi siz uchun band qilindi.`);
+    setResources((prev) =>
+      prev.map((item) =>
+        item.id === resource.id
+          ? {
+              ...item,
+              availableCopies: Math.max(0, item.availableCopies - 1),
+            }
+          : item
+      )
+    );
+    setReservingBook(null);
+    setQrTicketItem({ kind: 'book', loan: newLoan });
+    setToastMessage(
+      `#${ticketCode}: "${resource.title[lang]}" kitobi ${durationDays} kunga (${dueDate} gacha) band qilindi va QR talon yaratildi!`
+    );
+  };
+
+  const handleExtendLoan = (loanId: string, extraDays: number) => {
+    setLoans((prev) =>
+      prev.map((loan) => {
+        if (loan.id !== loanId) return loan;
+        const nextDueDate = addDaysToDateString(loan.dueDate, extraDays);
+        const currentDays =
+          loan.durationDays ||
+          calculateDaysBetween(loan.pickupDate, loan.dueDate);
+        return {
+          ...loan,
+          dueDate: nextDueDate,
+          durationDays: currentDays + extraDays,
+        };
+      })
+    );
+    setToastMessage(
+      lang === 'ru'
+        ? `Срок возврата книги успешно продлен на +${extraDays} дней!`
+        : lang === 'en'
+        ? `Book return due date extended by +${extraDays} days!`
+        : `Kitobni topshirish muddati muvaffaqiyatli +${extraDays} kunga uzaytirildi!`
+    );
+  };
+
+  const handleHandOverBook = (loanId: string) => {
+    const target = loans.find((l) => l.id === loanId);
+    setLoans((prev) =>
+      prev.map((loan) =>
+        loan.id === loanId ? { ...loan, status: 'active' } : loan
+      )
+    );
+    if (target) {
+      setToastMessage(
+        `Kitob talabaga topshirildi: "${target.resourceTitle[lang]}" (${target.studentName})`
+      );
+    }
+  };
+
+  const handleReturnBook = (loanId: string) => {
+    const target = loans.find((l) => l.id === loanId);
+    setLoans((prev) => prev.filter((l) => l.id !== loanId));
+    if (target) {
+      setResources((prev) =>
+        prev.map((item) =>
+          item.id === target.resourceId
+            ? {
+                ...item,
+                availableCopies: Math.min(
+                  item.totalCopies,
+                  item.availableCopies + 1
+                ),
+              }
+            : item
+        )
+      );
+      setToastMessage(
+        `Kitob kutubxona fondiga qaytarib olindi: "${target.resourceTitle[lang]}" (+1 bo‘sh nusxa)`
+      );
+    }
+  };
+
+  const handleAddResource = (newResource: LibraryResource) => {
+    setResources((prev) => [newResource, ...prev]);
+    setToastMessage(
+      `Yangi kitob kutubxona fondiga qo‘shildi: "${newResource.title[lang]}" (${newResource.totalCopies} nusxa)`
+    );
+  };
+
+  const handleUpdateResourceCopies = (resourceId: string, delta: number) => {
+    setResources((prev) =>
+      prev.map((item) => {
+        if (item.id !== resourceId) return item;
+        const nextAvail = Math.max(0, item.availableCopies + delta);
+        const nextTotal = Math.max(nextAvail, item.totalCopies + delta);
+        return {
+          ...item,
+          availableCopies: nextAvail,
+          totalCopies: nextTotal,
+        };
+      })
+    );
   };
 
   const handleToggleBookmark = (resourceId: string) => {
@@ -287,7 +506,7 @@ export default function App() {
       resourceTitle: target.title,
       chapterNumber,
       text,
-      createdAt: '2026-11-07',
+      createdAt: '2026-11-08',
     };
     setNotes((prev) => [newNote, ...prev]);
   };
@@ -298,13 +517,42 @@ export default function App() {
     const created: SeatReservation = {
       ...newBooking,
       id: `tuaf-rsv-${Date.now()}`,
-      createdAt: '2026-11-07 10:30',
+      createdAt: '2026-11-08 10:30',
     };
     setSeatReservations((prev) => [created, ...prev]);
+    setQrTicketItem({ kind: 'seat', seat: created });
+    setToastMessage(
+      `O‘quv zalidagi ${newBooking.seatCode} joy (${newBooking.timeSlot}) band qilindi va QR talon yaratildi!`
+    );
   };
 
+  const handleCancelSeatReservation = (resId: string) => {
+    setSeatReservations((prev) => prev.filter((r) => r.id !== resId));
+    setToastMessage(
+      lang === 'ru'
+        ? 'Бронь места в читальном зале отменена.'
+        : lang === 'en'
+        ? 'Reading hall desk reservation released.'
+        : 'O‘quv zalidagi joy bandlovi bekor qilindi va bo‘shatildi.'
+    );
+  };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowSpotlightModal((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917] overflow-x-hidden">
+    <div
+      id="top"
+      className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917] overflow-x-hidden"
+    >
       {/* Consolidated Single Header Bar */}
       <TopBar
         activeTab={activeTab}
@@ -314,9 +562,12 @@ export default function App() {
         studentProfile={studentProfile}
         onOpenLoginModal={() => {
           setPendingPdfBook(null);
+          setPendingReserveBook(null);
           setLoginReasonMessage(null);
           setShowLoginModal(true);
         }}
+        onOpenSpotlightSearch={() => setShowSpotlightModal(true)}
+        onOpenRoadmapModal={() => setShowRoadmapModal(true)}
         onLogout={handleLogout}
         activeLoansCount={loans.length}
         activeSeatsCount={
@@ -357,11 +608,13 @@ export default function App() {
             lang={lang}
             onOpenReader={(res) => setReaderResource(res)}
             onOpenCitation={(res) => setCitationResource(res)}
-            onReserveBook={handleReserveBook}
+            onReserveBook={handleOpenBookReservation}
             reservedIds={reservedIds}
             bookmarkedIds={bookmarkedIds}
             onToggleBookmark={handleToggleBookmark}
             onNavigateTab={setActiveTab}
+            onOpenSpotlightSearch={() => setShowSpotlightModal(true)}
+            onOpenRoadmapModal={() => setShowRoadmapModal(true)}
             studentProfile={studentProfile}
             onDownloadPdf={handleDownloadPdf}
             downloadedIds={downloadedIds}
@@ -375,6 +628,8 @@ export default function App() {
             onDownloadPdf={handleDownloadPdf}
             onOpenReader={(res) => setReaderResource(res)}
             onOpenCitation={(res) => setCitationResource(res)}
+            onReserveBook={handleOpenBookReservation}
+            reservedIds={reservedIds}
             downloadedIds={downloadedIds}
           />
         )}
@@ -385,7 +640,7 @@ export default function App() {
             lang={lang}
             onOpenReader={(res) => setReaderResource(res)}
             onOpenCitation={(res) => setCitationResource(res)}
-            onReserveBook={handleReserveBook}
+            onReserveBook={handleOpenBookReservation}
             reservedIds={reservedIds}
           />
         )}
@@ -399,6 +654,15 @@ export default function App() {
             seats={INITIAL_READING_ROOM_SEATS}
             reservations={seatReservations}
             onBookSeat={handleBookSeat}
+            onCancelSeatReservation={handleCancelSeatReservation}
+            onOpenQrTicket={(item) => setQrTicketItem(item)}
+            studentProfile={studentProfile}
+            onOpenLoginModal={(reason) => {
+              setPendingPdfBook(null);
+              setPendingReserveBook(null);
+              setLoginReasonMessage(reason);
+              setShowLoginModal(true);
+            }}
             lang={lang}
           />
         )}
@@ -411,15 +675,38 @@ export default function App() {
             onLogout={handleLogout}
             resources={resources}
             loans={loans}
-            onCancelLoan={(loanId) =>
-              setLoans((prev) => prev.filter((l) => l.id !== loanId))
-            }
+            onOpenBookReservation={handleOpenBookReservation}
+            onExtendLoan={handleExtendLoan}
+            onCancelLoan={(loanId) => {
+              const target = loans.find((l) => l.id === loanId);
+              setLoans((prev) => prev.filter((l) => l.id !== loanId));
+              if (target) {
+                setResources((prev) =>
+                  prev.map((item) =>
+                    item.id === target.resourceId
+                      ? {
+                          ...item,
+                          availableCopies: Math.min(
+                            item.totalCopies,
+                            item.availableCopies + 1
+                          ),
+                        }
+                      : item
+                  )
+                );
+              }
+              setToastMessage(
+                lang === 'ru'
+                  ? 'Бронь книги отменена.'
+                  : lang === 'en'
+                  ? 'Book reservation cancelled.'
+                  : 'Kitob bandlovi bekor qilindi.'
+              );
+            }}
+            seats={INITIAL_READING_ROOM_SEATS}
             seatReservations={seatReservations}
-            onCancelSeatReservation={(resId) =>
-              setSeatReservations((prev) =>
-                prev.filter((r) => r.id !== resId)
-              )
-            }
+            onBookSeat={handleBookSeat}
+            onCancelSeatReservation={handleCancelSeatReservation}
             bookmarkedIds={bookmarkedIds}
             onToggleBookmark={handleToggleBookmark}
             notes={notes}
@@ -429,12 +716,49 @@ export default function App() {
             onOpenReader={(res) => setReaderResource(res)}
             onOpenCitation={(res) => setCitationResource(res)}
             onDownloadPdf={handleDownloadPdf}
+            onOpenQrTicket={(item) => setQrTicketItem(item)}
             downloadedIds={downloadedIds}
+          />
+        )}
+
+        {activeTab === 'admin' && (
+          <AdminPortalView
+            lang={lang}
+            adminStaff={adminStaff}
+            onAdminLogin={handleAdminLogin}
+            onAdminLogout={handleAdminLogout}
+            onBackToCatalog={() => setActiveTab('catalog')}
+            resources={resources}
+            onAddResource={handleAddResource}
+            onUpdateResourceCopies={handleUpdateResourceCopies}
+            loans={loans}
+            onHandOverBook={handleHandOverBook}
+            onReturnBook={handleReturnBook}
+            onExtendLoan={handleExtendLoan}
+            onCancelLoan={handleReturnBook}
+            seats={INITIAL_READING_ROOM_SEATS}
+            seatReservations={seatReservations}
+            onCancelSeatReservation={handleCancelSeatReservation}
+            onOpenQrTicket={(item) => setQrTicketItem(item)}
           />
         )}
       </main>
 
       {/* Modals */}
+      <BookReservationModal
+        resource={reservingBook}
+        studentProfile={studentProfile}
+        lang={lang}
+        onClose={() => setReservingBook(null)}
+        onConfirm={handleConfirmBookReservation}
+      />
+
+      <QrTicketModal
+        ticket={qrTicketItem}
+        lang={lang}
+        onClose={() => setQrTicketItem(null)}
+      />
+
       <ReaderModal
         resource={readerResource}
         lang={lang}
@@ -463,10 +787,30 @@ export default function App() {
           onClose={() => {
             setShowLoginModal(false);
             setPendingPdfBook(null);
+            setPendingReserveBook(null);
             setLoginReasonMessage(null);
           }}
         />
       )}
+
+      <SpotlightSearchModal
+        isOpen={showSpotlightModal}
+        onClose={() => setShowSpotlightModal(false)}
+        resources={resources}
+        lang={lang}
+        studentProfile={studentProfile}
+        reservedIds={reservedIds}
+        onOpenReader={(res) => setReaderResource(res)}
+        onDownloadPdf={handleDownloadPdf}
+        onReserveBook={handleOpenBookReservation}
+      />
+
+      <StudentRoadmapModal
+        isOpen={showRoadmapModal}
+        onClose={() => setShowRoadmapModal(false)}
+        onNavigateTab={setActiveTab}
+        onOpenSpotlightSearch={() => setShowSpotlightModal(true)}
+      />
 
       {/* Official Turon University Andijon Filiali (tuaf.uz) Institutional Footer */}
       <footer className="border-t border-[#E5DEC9] bg-[#F3EFE6] px-4 sm:px-6 lg:px-12 py-8 sm:py-10 text-xs text-[#57534E]">
@@ -476,7 +820,9 @@ export default function App() {
               Turon University — Andijon Filiali Axborot-Resurs Markazi
             </div>
             <p className="leading-relaxed">
-              {t.utilityCollection}. Integratsiyalashgan fanlar fakulteti (Iqtisodiyot va moliya, Pedagogika va tillar, Tabiiy, aniq va gumanitar fanlar kafedralari).
+              {t.utilityCollection}. Integratsiyalashgan fanlar fakulteti
+              (Iqtisodiyot va moliya, Pedagogika va tillar, Tabiiy, aniq va
+              gumanitar fanlar kafedralari).
             </p>
           </div>
 
@@ -484,7 +830,9 @@ export default function App() {
             <div className="font-semibold text-[#0F2342] font-sans">
               Rasmiy Aloqa va Manzil (tuaf.uz)
             </div>
-            <div>Andijon shahar, Paxtakor MFY, A.Yuldashev ko‘chasi, 58-a-uy</div>
+            <div>
+              Andijon shahar, Paxtakor MFY, A.Yuldashev ko‘chasi, 58-a-uy
+            </div>
             <div>Tel: +998 74 200 00 25 · Dush–Shan: 09:00–18:00</div>
             <div>Email: turonuniversityandijan@gmail.com</div>
           </div>
@@ -510,21 +858,25 @@ export default function App() {
               >
                 HEMIS portali: hemis.tuaf.uz
               </a>
-              <a
-                href="https://qabul.tuaf.uz"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[#0F2342] underline decoration-[#E5DEC9]"
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('admin');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="text-left text-[#0F2342] font-semibold hover:text-[#0099B5] flex items-center gap-1 cursor-pointer pt-1"
               >
-                Qabul tizimi: qabul.tuaf.uz
-              </a>
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C59B27]" />
+                <span>ARM Kutubxonachi va Admin Paneli</span>
+              </button>
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono-tabular text-[11px]">
           <div>
-            © 2026 Turon University — Andijon Filiali. Barcha huquqlar himoyalangan.
+            © 2026 Turon University — Andijon Filiali. Barcha huquqlar
+            himoyalangan.
           </div>
           <div>{t.utilityStandard}</div>
         </div>

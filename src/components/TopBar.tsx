@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, LogOut, Menu, UserCheck, X } from 'lucide-react';
+import { Compass, LogIn, LogOut, Menu, Search, ShieldCheck, UserCheck, X } from 'lucide-react';
 import { Language, StudentProfile } from '../types/library';
 import { UI_TRANSLATIONS } from '../data/translations';
 import { TUAF_OFFICIAL_LOGO } from '../data/seedLibraryData';
@@ -10,7 +10,8 @@ export type ActiveTab =
   | 'dissertations'
   | 'mediatheque'
   | 'reading-hall'
-  | 'cabinet';
+  | 'cabinet'
+  | 'admin';
 
 interface TopBarProps {
   activeTab: ActiveTab;
@@ -19,6 +20,8 @@ interface TopBarProps {
   setLang: (lang: Language) => void;
   studentProfile: StudentProfile | null;
   onOpenLoginModal: () => void;
+  onOpenSpotlightSearch?: () => void;
+  onOpenRoadmapModal?: () => void;
   onLogout: () => void;
   activeLoansCount: number;
   activeSeatsCount: number;
@@ -31,6 +34,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   setLang,
   studentProfile,
   onOpenLoginModal,
+  onOpenSpotlightSearch,
+  onOpenRoadmapModal,
   onLogout,
   activeLoansCount,
   activeSeatsCount,
@@ -53,6 +58,15 @@ export const TopBar: React.FC<TopBarProps> = ({
     { id: 'mediatheque', label: t.navMediatheque },
     { id: 'reading-hall', label: t.navReadingHall },
     { id: 'cabinet', label: t.navCabinet },
+    {
+      id: 'admin',
+      label:
+        lang === 'uz'
+          ? 'ARM Admin'
+          : lang === 'ru'
+          ? 'АРМ Админ'
+          : 'ARM Admin',
+    },
   ];
 
   const totalActiveItems = activeLoansCount + activeSeatsCount;
@@ -97,18 +111,22 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
+            const isAdminItem = item.id === 'admin';
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleSelectTab(item.id)}
-                className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 cursor-pointer ${
+                className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 flex items-center gap-1 cursor-pointer ${
                   isActive
                     ? 'text-white font-semibold border-[#38BDF8]'
+                    : isAdminItem
+                    ? 'border-transparent text-[#C59B27] hover:text-white hover:border-[#C59B27]'
                     : 'border-transparent hover:text-white hover:border-white/40'
                 }`}
               >
-                {item.label}
+                {isAdminItem && <ShieldCheck className="w-3.5 h-3.5 shrink-0" />}
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -134,6 +152,35 @@ export const TopBar: React.FC<TopBarProps> = ({
               ))}
             </select>
           </div>
+
+          {/* Student Roadmap (Slide + PDF) Trigger */}
+          {onOpenRoadmapModal && (
+            <button
+              type="button"
+              onClick={onOpenRoadmapModal}
+              aria-label="Talaba yo‘l xaritasi (Slayd va PDF)"
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-[#C59B27]/20 hover:bg-[#C59B27]/35 text-[#FDE68A] rounded-full border border-[#C59B27]/70 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5 text-[#FDE68A] shrink-0" />
+              <span className="hidden md:inline">Yo‘l xaritasi (PDF)</span>
+            </button>
+          )}
+
+          {/* Quick Spotlight Search Trigger (Ctrl + K) */}
+          {onOpenSpotlightSearch && (
+            <button
+              type="button"
+              onClick={onOpenSpotlightSearch}
+              aria-label="Intellektual qidiruv (Ctrl+K)"
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-medium bg-[#0B2D5C] hover:bg-[#123e7c] text-white/90 hover:text-white rounded-full border border-[#C59B27]/45 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5 text-[#C59B27] shrink-0" />
+              <span className="hidden xl:inline">Qidiruv</span>
+              <span className="hidden sm:inline font-mono-tabular text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-[#FDE68A]">
+                Ctrl+K
+              </span>
+            </button>
+          )}
 
           {/* Clean Language Switcher */}
           <div

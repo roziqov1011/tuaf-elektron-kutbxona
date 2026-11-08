@@ -1,12 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  addDaysToDateString,
+  calculateDaysBetween,
   calculateHallOccupancy,
   filterCatalogItems,
+  findReservationsByQuery,
+  generateBookingTicketCode,
   generateCitation,
+  generateQrMatrix,
+  quickSearchSpotlight,
+  splitChapterIntoSpreadPages,
   validateNewResourceForm,
 } from './libraryLogic';
 import {
+  INITIAL_BOOK_LOANS,
   INITIAL_LIBRARY_RESOURCES,
   INITIAL_READING_ROOM_SEATS,
   INITIAL_SEAT_RESERVATIONS,
@@ -134,3 +142,67 @@ test('validateNewResourceForm rejects invalid DOI or short title and accepts val
   });
   assert.equal(valid.valid, true);
 });
+
+test('addDaysToDateString, calculateDaysBetween, and generateBookingTicketCode handle loan duration math accurately', () => {
+  assert.equal(addDaysToDateString('2026-11-08', 3), '2026-11-11');
+  assert.equal(addDaysToDateString('2026-11-08', 7), '2026-11-15');
+  assert.equal(addDaysToDateString('2026-11-08', 14), '2026-11-22');
+  assert.equal(addDaysToDateString('2026-11-08', 30), '2026-12-08');
+
+  assert.equal(calculateDaysBetween('2026-11-08', '2026-11-22'), 14);
+  assert.equal(calculateDaysBetween('2026-11-08', '2026-12-08'), 30);
+
+  const bookTicket = generateBookingTicketCode('KTB', 123456);
+  assert.equal(bookTicket, 'TUAF-KTB-7456');
+
+  const seatTicket = generateBookingTicketCode('JOY', 9900);
+  assert.equal(seatTicket, 'TUAF-JOY-1900');
+});
+
+test('generateQrMatrix builds valid 21x21 QR finder patterns and findReservationsByQuery matches ticket codes', () => {
+  const matrix = generateQrMatrix('TUAF-KTB-4821', 21);
+  assert.equal(matrix.length, 21);
+  assert.equal(matrix[0].length, 21);
+  // Top-left finder corner outer border and inner center must be true
+  assert.equal(matrix[0][0], true);
+  assert.equal(matrix[3][3], true);
+  // Top-right finder corner
+  assert.equal(matrix[0][20], true);
+  // Bottom-left finder corner
+  assert.equal(matrix[20][0], true);
+
+  const byTicket = findReservationsByQuery(
+    '#TUAF-KTB-4821',
+    INITIAL_BOOK_LOANS,
+    INITIAL_SEAT_RESERVATIONS
+  );
+  assert.equal(byTicket.matchedLoans.length, 1);
+  assert.equal(byTicket.matchedLoans[0].id, 'tuaf-loan-201');
+  assert.equal(byTicket.matchedSeats.length, 0);
+
+  const bySeatTicket = findReservationsByQuery(
+    'TUAF-JOY-1108',
+    INITIAL_BOOK_LOANS,
+    INITIAL_SEAT_RESERVATIONS
+  );
+  assert.equal(bySeatTicket.matchedSeats.length, 1);
+  assert.equal(bySeatTicket.matchedSeats[0].seatCode, 'A-03');
+});
+
+test('quickSearchSpotlight ranks matching resources by title, author, and UDC and splitChapterIntoSpreadPages splits text cleanly', () => {
+  const matches = quickSearchSpotlight(INITIAL_LIBRARY_RESOURCES, 'Omonov', 'uz', 4);
+  assert.ok(matches.length >= 1);
+  assert.equal(matches[0].id, 'tuaf-omonov-banking-monograph');
+
+  const spread = splitChapterIntoSpreadPages(
+    'Birinchi jumla bank tizimi haqida. Ikkinchi jumla pul-kredit siyosatini yoritadi. Uchinchi jumla xalqaro standartlarni tahlil qiladi. To‘rtinchi jumla xulosani beradi.',
+    'Annotatsiya matni.'
+  );
+  assert.equal(spread.leftPageParagraphs.length, 1);
+  assert.equal(spread.rightPageParagraphs.length, 2);
+  assert.ok(spread.leftPageParagraphs[0].includes('Birinchi jumla'));
+  assert.ok(spread.rightPageParagraphs[0].includes('Uchinchi jumla'));
+});
+
+
+

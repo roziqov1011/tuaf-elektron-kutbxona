@@ -108,6 +108,12 @@ export interface ReadingRoomSeat {
   defaultStatus: 'available' | 'occupied';
 }
 
+export type LoanDurationDays = 3 | 7 | 14 | 30;
+export type LoanDeliveryFormat =
+  | 'physical-pickup'
+  | 'reading-hall-desk'
+  | 'digital-license';
+
 export interface SeatReservation {
   id: string;
   seatId: string;
@@ -118,6 +124,8 @@ export interface SeatReservation {
   studentId: string;
   date: string;
   timeSlot: string;
+  durationHours?: string;
+  ticketCode?: string;
   purpose: string;
   status: 'confirmed' | 'completed' | 'cancelled';
   createdAt: string;
@@ -133,7 +141,11 @@ export interface BookLoanReservation {
   studentId: string;
   pickupDate: string;
   dueDate: string;
-  format: 'physical-pickup' | 'digital-license';
+  durationDays?: number;
+  ticketCode?: string;
+  pickupLocation?: string;
+  note?: string;
+  format: LoanDeliveryFormat;
   status: 'active' | 'ready-for-pickup' | 'returned';
 }
 
@@ -180,4 +192,18 @@ export interface StudentProfile {
   loginMethod: 'hemis' | 'email' | 'sso';
   lastLoginAt: string;
 }
+
+export type QrPassTicketItem =
+  | { kind: 'book'; loan: BookLoanReservation }
+  | { kind: 'seat'; seat: SeatReservation };
+
+export interface AdminStaffProfile {
+  id: string;
+  fullName: string;
+  roleTitle: string;
+  staffId: string;
+  email: string;
+  department: string;
+}
+
 

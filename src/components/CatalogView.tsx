@@ -4,6 +4,7 @@ import {
   BookOpen,
   Bookmark,
   Check,
+  Compass,
   Download,
   FileText,
   GraduationCap,
@@ -15,6 +16,7 @@ import {
   RotateCcw,
   Search,
   SlidersHorizontal,
+  Sparkles,
   Video,
   X,
 } from 'lucide-react';
@@ -39,6 +41,7 @@ import {
 } from '../data/seedLibraryData';
 import { FAMOUS_BOOKS } from '../data/famousBooks';
 import { ActiveTab } from './TopBar';
+import { Book3DCover } from './Book3DCover';
 
 interface CatalogViewProps {
   resources: LibraryResource[];
@@ -54,6 +57,8 @@ interface CatalogViewProps {
   bookmarkedIds: Set<string>;
   onToggleBookmark: (resourceId: string) => void;
   onNavigateTab?: (tab: ActiveTab) => void;
+  onOpenSpotlightSearch?: () => void;
+  onOpenRoadmapModal?: () => void;
   studentProfile: StudentProfile | null;
   onDownloadPdf: (resource: LibraryResource) => void;
   downloadedIds: Set<string>;
@@ -73,6 +78,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   bookmarkedIds,
   onToggleBookmark,
   onNavigateTab,
+  onOpenSpotlightSearch,
+  onOpenRoadmapModal,
   studentProfile,
   onDownloadPdf,
   downloadedIds,
@@ -81,6 +88,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   const [programLevelTab, setProgramLevelTab] = useState<'bachelor' | 'master'>(
     'bachelor'
   );
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isYtPlaying, setIsYtPlaying] = useState(false);
@@ -120,11 +128,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
     }
   };
 
-  const leadItem =
-    resources.find((r) => r.featuredRank === 'lead') || resources[0];
-  const secondaryItems = resources
-    .filter((r) => r.id !== leadItem?.id)
-    .slice(0, 2);
+  const spotlightBooks = resources.slice(0, 4);
+  const activeSpotlightBook =
+    spotlightBooks[spotlightIndex] || spotlightBooks[0] || resources[0];
 
   const faculties: FacultyId[] = [
     'all',
@@ -268,7 +274,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 sm:pt-16 sm:pb-18 lg:pt-20 lg:pb-24">
           <div className="max-w-2xl space-y-5 sm:space-y-6">
             {/* Uzbekistan Tricolor Pill + Kicker */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 tuaf-word-reveal">
               <div className="flex items-center h-1.5 w-12 sm:w-14 rounded-full overflow-hidden shrink-0">
                 <span className="flex-1 h-full bg-[#0099B5]" />
                 <span className="w-1.5 h-full bg-[#CE1126]" />
@@ -280,11 +286,11 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             </div>
 
             {/* Display Title matching tuaf.vercel.app */}
-            <h1 className="font-sans text-3xl sm:text-5xl lg:text-[58px] font-extrabold tracking-tight leading-[1.08] uppercase text-white drop-shadow-md">
+            <h1 className="font-sans text-3xl sm:text-5xl lg:text-[58px] font-extrabold tracking-tight leading-[1.08] uppercase text-white drop-shadow-md tuaf-word-reveal tuaf-delay-1">
               <span className="block">
                 {lang === 'ru' ? 'Университет Турон' : 'Turon universiteti'}
               </span>
-              <span className="block text-white/95 mt-1">
+              <span className="block tuaf-gold-shimmer-text mt-1">
                 {lang === 'ru'
                   ? 'Андижанский филиал'
                   : lang === 'en'
@@ -294,17 +300,17 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             </h1>
 
             {/* Concise Editorial Tagline */}
-            <p className="text-base sm:text-xl font-serif-academic italic text-stone-200 leading-relaxed">
+            <p className="text-base sm:text-xl font-serif-academic italic text-stone-200 leading-relaxed tuaf-word-reveal tuaf-delay-2">
               {t.heroSubtitle}
             </p>
 
-            {/* Clean, Single-Line Search Bar */}
+            {/* Clean, Single-Line Search Bar + Ctrl+K Spotlight Trigger */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 scrollToCatalog();
               }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/25 shadow-xl"
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/25 shadow-xl tuaf-word-reveal tuaf-delay-3"
             >
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -325,16 +331,29 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   className="w-full pl-10 pr-4 py-3 text-sm bg-white rounded-lg text-[#041E41] placeholder:text-stone-500 focus:outline-none"
                 />
               </div>
-              <button
-                type="submit"
-                className="px-6 py-3 text-sm font-semibold text-white bg-[#0099B5] hover:bg-[#008199] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                {t.searchButton}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 sm:flex-initial px-5 py-3 text-sm font-semibold text-white bg-[#0099B5] hover:bg-[#008199] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  {t.searchButton}
+                </button>
+                {onOpenSpotlightSearch && (
+                  <button
+                    type="button"
+                    onClick={onOpenSpotlightSearch}
+                    title="Intellektual tezkor qidiruv (Ctrl + K)"
+                    className="px-3.5 py-3 text-xs font-semibold text-[#FDE68A] bg-[#041E41]/90 hover:bg-[#0B2D5C] border border-[#C59B27]/60 rounded-lg flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#C59B27]" />
+                    <span>Ctrl+K</span>
+                  </button>
+                )}
+              </div>
             </form>
 
             {/* Clean Hero CTA Row matching https://tuaf.vercel.app */}
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 tuaf-word-reveal tuaf-delay-4">
               <button
                 type="button"
                 onClick={() => setIsVideoModalOpen(true)}
@@ -383,90 +402,124 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 </span>
                 <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
+
+              {onOpenRoadmapModal && (
+                <button
+                  type="button"
+                  onClick={onOpenRoadmapModal}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-[#C59B27] hover:bg-[#d4a92f] text-[#041E41] text-sm font-extrabold shadow-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4 shrink-0" />
+                  <span>Talaba Yo‘l Xaritasi (Slayd & PDF)</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Clean 5-Column Library Quick-Service Strip */}
-        <div className="relative z-10 bg-white text-stone-900 border-b border-stone-200">
-          <div className="max-w-[1400px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-stone-200">
-            <button
-              type="button"
-              onClick={scrollToCatalog}
-              className="group flex flex-col items-center justify-center py-4 sm:py-5 px-3 hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] mb-1.5 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center">
-                {lang === 'ru'
-                  ? 'Электронный каталог'
-                  : lang === 'en'
-                  ? 'Digital Catalog'
-                  : 'Elektron katalog'}
-              </span>
-            </button>
+        {/* Auto-Sliding Library Quick-Service Strip */}
+        <div className="relative z-10 bg-white text-stone-900 border-b border-stone-200 overflow-hidden">
+          {/* Soft left/right fade masks */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-16 z-10 bg-gradient-to-r from-white to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-16 z-10 bg-gradient-to-l from-white to-transparent"
+          />
 
-            <button
-              type="button"
-              onClick={() =>
-                onNavigateTab ? onNavigateTab('dissertations') : scrollToCatalog()
-              }
-              className="group flex flex-col items-center justify-center py-4 sm:py-5 px-3 hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] mb-1.5 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center">
-                {lang === 'ru'
-                  ? 'Диссертации и статьи'
-                  : lang === 'en'
-                  ? 'Dissertations & Papers'
-                  : 'Dissertatsiyalar'}
-              </span>
-            </button>
+          <div
+            aria-label="Kutubxona tezkor xizmatlari avto-slayderi"
+            className="animate-tuaf-marquee-left divide-x divide-stone-200"
+          >
+            {[0, 1].map((dupIndex) => (
+              <React.Fragment key={`service-strip-set-${dupIndex}`}>
+                <button
+                  type="button"
+                  onClick={scrollToCatalog}
+                  className="group w-[230px] sm:w-[280px] shrink-0 flex flex-col items-center justify-center py-4 sm:py-5 px-4 hover:bg-[#FBF9F5] transition-all cursor-pointer"
+                >
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] group-hover:text-[#B8860B] mb-1.5 group-hover:scale-110 transition-all shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center whitespace-nowrap">
+                    {lang === 'ru'
+                      ? 'Электронный каталог'
+                      : lang === 'en'
+                      ? 'Digital Catalog'
+                      : 'Elektron katalog'}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                onNavigateTab ? onNavigateTab('mediatheque') : scrollToCatalog()
-              }
-              className="group flex flex-col items-center justify-center py-4 sm:py-5 px-3 hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <Video className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] mb-1.5 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center">
-                {lang === 'ru'
-                  ? 'Видеолекции'
-                  : lang === 'en'
-                  ? 'Video Lectures'
-                  : 'Video ma’ruzalar'}
-              </span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onNavigateTab
+                      ? onNavigateTab('dissertations')
+                      : scrollToCatalog()
+                  }
+                  className="group w-[230px] sm:w-[280px] shrink-0 flex flex-col items-center justify-center py-4 sm:py-5 px-4 hover:bg-[#FBF9F5] transition-all cursor-pointer"
+                >
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] group-hover:text-[#B8860B] mb-1.5 group-hover:scale-110 transition-all shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center whitespace-nowrap">
+                    {lang === 'ru'
+                      ? 'Диссертации и статьи'
+                      : lang === 'en'
+                      ? 'Dissertations & Papers'
+                      : 'Dissertatsiyalar'}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                onNavigateTab ? onNavigateTab('reading-hall') : scrollToCatalog()
-              }
-              className="group flex flex-col items-center justify-center py-4 sm:py-5 px-3 hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <LampDesk className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] mb-1.5 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center">
-                {lang === 'ru'
-                  ? 'Читальный зал (200+ мест)'
-                  : lang === 'en'
-                  ? 'Reading Hall (200+ Seats)'
-                  : 'O‘quv zali (200+ o‘rin)'}
-              </span>
-            </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onNavigateTab
+                      ? onNavigateTab('mediatheque')
+                      : scrollToCatalog()
+                  }
+                  className="group w-[230px] sm:w-[280px] shrink-0 flex flex-col items-center justify-center py-4 sm:py-5 px-4 hover:bg-[#FBF9F5] transition-all cursor-pointer"
+                >
+                  <Video className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] group-hover:text-[#B8860B] mb-1.5 group-hover:scale-110 transition-all shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center whitespace-nowrap">
+                    {lang === 'ru'
+                      ? 'Видеолекции'
+                      : lang === 'en'
+                      ? 'Video Lectures'
+                      : 'Video ma’ruzalar'}
+                  </span>
+                </button>
 
-            <a
-              href="https://hemis.tuaf.uz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col items-center justify-center py-4 sm:py-5 px-3 hover:bg-stone-50 transition-colors col-span-2 sm:col-span-1"
-            >
-              <Network className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] mb-1.5 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center">
-                HEMIS (hemis.tuaf.uz)
-              </span>
-            </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onNavigateTab
+                      ? onNavigateTab('reading-hall')
+                      : scrollToCatalog()
+                  }
+                  className="group w-[230px] sm:w-[280px] shrink-0 flex flex-col items-center justify-center py-4 sm:py-5 px-4 hover:bg-[#FBF9F5] transition-all cursor-pointer"
+                >
+                  <LampDesk className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] group-hover:text-[#B8860B] mb-1.5 group-hover:scale-110 transition-all shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center whitespace-nowrap">
+                    {lang === 'ru'
+                      ? 'Читальный зал (200+ мест)'
+                      : lang === 'en'
+                      ? 'Reading Hall (200+ Seats)'
+                      : 'O‘quv zali (200+ o‘rin)'}
+                  </span>
+                </button>
+
+                <a
+                  href="https://hemis.tuaf.uz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group w-[230px] sm:w-[280px] shrink-0 flex flex-col items-center justify-center py-4 sm:py-5 px-4 hover:bg-[#FBF9F5] transition-all"
+                >
+                  <Network className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B2D5C] group-hover:text-[#B8860B] mb-1.5 group-hover:scale-110 transition-all shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#041E41] text-center whitespace-nowrap">
+                    HEMIS (hemis.tuaf.uz)
+                  </span>
+                </a>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </section>
@@ -511,11 +564,11 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-6 lg:p-8 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5DEC9] pb-4">
             <div>
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-serif-academic font-bold text-[#0F2342] flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-serif-academic font-bold text-[#0F2342] flex items-center gap-2 tuaf-word-reveal">
                 <GraduationCap className="w-5 h-5 text-[#B8860B] shrink-0" />
-                <span>{t.programsSectionTitle}</span>
+                <span className="tuaf-section-heading">{t.programsSectionTitle}</span>
               </h2>
-              <p className="text-xs text-[#57534E] mt-1">
+              <p className="text-xs text-[#57534E] mt-1.5 tuaf-word-reveal tuaf-delay-1">
                 {t.programsSectionSubtitle}
               </p>
             </div>
@@ -558,12 +611,22 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {displayedPrograms.map((prog) => {
+          {(() => {
+            const midpoint = Math.ceil(displayedPrograms.length / 2);
+            const firstRowPrograms = displayedPrograms.slice(0, midpoint);
+            const secondRowPrograms = displayedPrograms.slice(midpoint);
+            const rowOneTrack = [...firstRowPrograms, ...firstRowPrograms];
+            const rowTwoTrack = [...secondRowPrograms, ...secondRowPrograms];
+
+            const renderProgramCard = (
+              prog: (typeof displayedPrograms)[number],
+              idx: number,
+              rowKey: string
+            ) => {
               const isSelected = filters.programCode === prog.code;
               return (
                 <button
-                  key={prog.code}
+                  key={`${rowKey}-${prog.code}-${idx}`}
                   type="button"
                   onClick={() =>
                     setFilters((prev) => ({
@@ -572,42 +635,79 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       faculty: 'all',
                     }))
                   }
-                  className={`p-3.5 rounded-lg border text-left transition-colors flex items-center justify-between gap-2 ${
+                  className={`tuaf-slider-chip w-[270px] sm:w-[300px] shrink-0 p-3.5 rounded-lg border text-left flex items-center justify-between gap-2.5 cursor-pointer shadow-2xs ${
                     isSelected
-                      ? 'bg-[#0F2342] text-[#FBF9F5] border-[#0F2342]'
-                      : 'bg-[#FBF9F5] text-[#1C1917] border-[#E5DEC9] hover:border-[#0F2342]'
+                      ? 'bg-[#0F2342] text-[#FBF9F5] border-[#0F2342] ring-2 ring-[#C59B27]/50'
+                      : 'bg-[#FBF9F5] text-[#1C1917] border-[#E5DEC9] hover:border-[#B8860B] hover:bg-white'
                   }`}
                 >
-                  <span className="text-sm font-semibold leading-snug">
+                  <span className="text-sm font-semibold leading-snug truncate transition-transform duration-300 group-hover:translate-x-0.5">
                     {prog.name[lang]}
                   </span>
                   <span
-                    className={`text-xs font-mono-tabular shrink-0 ${
-                      isSelected ? 'text-[#C59B27]' : 'text-[#57534E]'
+                    className={`text-xs font-mono-tabular px-2 py-0.5 rounded shrink-0 transition-colors ${
+                      isSelected
+                        ? 'bg-[#C59B27] text-[#041E41] font-bold'
+                        : 'bg-[#F3EFE6] text-[#57534E]'
                     }`}
                   >
                     {prog.code.split('-')[0]}
                   </span>
                 </button>
               );
-            })}
-          </div>
+            };
 
-          {/* Sohalar bo'yicha mashhur kitoblar (Rasmi va PDF yuklab olish bilan) */}
-          <div className="pt-6 border-t border-[#E5DEC9] space-y-4">
+            return (
+              <div
+                aria-label="Ta’lim yo‘nalishlari avto-slayderi"
+                className="relative overflow-hidden py-1 space-y-3"
+              >
+                {/* Soft left/right fade masks */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-14 z-10 bg-gradient-to-r from-white to-transparent"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-14 z-10 bg-gradient-to-l from-white to-transparent"
+                />
+
+                {/* Row 1: Auto-scrolling Left */}
+                <div className="overflow-hidden">
+                  <div className="animate-tuaf-marquee-left gap-3 pr-3">
+                    {rowOneTrack.map((prog, idx) =>
+                      renderProgramCard(prog, idx, 'row1')
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2: Auto-scrolling Right (Opposite direction) */}
+                <div className="overflow-hidden">
+                  <div className="animate-tuaf-marquee-right gap-3 pr-3">
+                    {rowTwoTrack.map((prog, idx) =>
+                      renderProgramCard(prog, idx, 'row2')
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Sohalar bo'yicha mashhur kitoblar — 3D Tirik Javon (Living 3D Bookshelf) */}
+          <div className="pt-6 border-t border-[#E5DEC9] space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-lg font-serif-academic font-bold text-[#0F2342]">
+                <h3 className="text-lg sm:text-xl font-serif-academic font-bold text-[#0F2342]">
                   {lang === 'ru'
-                    ? 'Популярные учебники по сферам (с обложками и скачиванием PDF)'
+                    ? 'Популярные учебники по сферам (3D-полка и скачивание PDF)'
                     : lang === 'en'
-                    ? 'Famous Textbooks by Field (Cover Gallery & PDF Download)'
-                    : 'Sohalar bo‘yicha mashhur kitoblar (PDF yuklab olish)'}
+                    ? 'Famous Textbooks by Field (3D Hardcover Shelf & PDF)'
+                    : 'Sohalar bo‘yicha mashhur kitoblar — 3D Kutubxona Javoni'}
                 </h3>
                 <p className="text-xs text-[#57534E]">
                   {studentProfile
-                    ? `Talaba hisobi faol (${studentProfile.fullName}) — PDF kitoblarni bepul yuklab olishingiz mumkin`
-                    : 'PDF kitoblarni yuklab olish faqat ro‘yxatdan o‘tgan talabalar uchun ochiq'}
+                    ? `Talaba hisobi faol (${studentProfile.fullName}) — kitobni bosing yoki PDF formatda yuklab oling`
+                    : 'Har bir 3D kitobni ikki betli mutolaa oynasida varaqlab ko‘rishingiz yoki PDF yuklab olishingiz mumkin'}
                 </p>
               </div>
               {onNavigateTab && (
@@ -625,35 +725,27 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {FAMOUS_BOOKS.slice(0, 4).map((book) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {FAMOUS_BOOKS.slice(0, 4).map((book, idx) => {
                 const isDownloaded = downloadedIds.has(book.id);
                 return (
                   <div
                     key={book.id}
-                    className="bg-[#FBF9F5] border border-[#E5DEC9] rounded-xl overflow-hidden flex flex-col justify-between hover:border-[#B8860B] transition-colors"
+                    style={{ animationDelay: `${idx * 85}ms` }}
+                    className="tuaf-card-interactive tuaf-card-reveal bg-gradient-to-b from-[#FBF9F5] to-[#F3EFE6] border border-[#E5DEC9] rounded-xl overflow-hidden flex flex-col justify-between"
                   >
                     <div>
-                      <div className="aspect-[4/3] bg-[#0F2342] overflow-hidden border-b border-[#E5DEC9]">
-                        {book.coverImage && !brokenImages[book.id] ? (
-                          <img
-                            src={book.coverImage}
-                            alt={book.title[lang]}
-                            referrerPolicy="no-referrer"
-                            onError={() =>
-                              setBrokenImages((prev) => ({
-                                ...prev,
-                                [book.id]: true,
-                              }))
-                            }
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full p-4 flex items-end text-white font-serif-academic text-sm font-bold">
-                            {book.title[lang]}
-                          </div>
-                        )}
+                      {/* 3D Book Standing on Library Oak Pedestal */}
+                      <div className="pt-5 pb-3 px-4 bg-[radial-gradient(circle_at_50%_25%,rgba(197,155,39,0.16),transparent_70%)] flex flex-col items-center">
+                        <Book3DCover
+                          resource={book}
+                          lang={lang}
+                          size="md"
+                          onClick={() => onOpenReader(book)}
+                        />
+                        <div className="w-full h-2.5 rounded-full tuaf-library-shelf-plank mt-1" />
                       </div>
+
                       <div className="p-3.5 space-y-1.5">
                         <div className="text-[11px] font-semibold text-[#B8860B]">
                           {
@@ -662,8 +754,10 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                             ][lang]
                           }
                         </div>
-                        <h4 className="font-serif-academic font-bold text-[#0F2342] text-sm leading-snug line-clamp-2">
-                          {book.title[lang]}
+                        <h4 className="font-serif-academic font-bold text-[#0F2342] text-sm sm:text-base leading-snug line-clamp-2">
+                          <span className="tuaf-animated-title">
+                            {book.title[lang]}
+                          </span>
                         </h4>
                         <p className="text-xs text-[#57534E] truncate">
                           {book.authors.join(', ')}
@@ -683,9 +777,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                           <Lock className="w-3.5 h-3.5 text-[#C59B27]" />
                         )}
                         <span>
-                          {isDownloaded
-                            ? 'Yuklandi (PDF)'
-                            : 'PDF yuklash'}
+                          {isDownloaded ? 'Yuklandi (PDF)' : 'PDF yuklash'}
                         </span>
                       </button>
                       <button
@@ -704,141 +796,180 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
       </section>
 
-      {/* Featured Editions Showcase (Clean & Uncluttered) */}
-      {leadItem &&
+      {/* ARM Oltin Fondi — Interaktiv 3D Kitob Vitrinasi (Museum-Style Curated Exhibition Spotlight) */}
+      {activeSpotlightBook &&
         filters.query === '' &&
         filters.faculty === 'all' &&
         filters.programCode === 'all' && (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-            <div className="border-b border-[#E5DEC9] pb-3 mb-6">
-              <p className="text-xs uppercase tracking-widest text-[#B8860B] font-semibold">
-                {t.leadCuratedKicker}
-              </p>
-              <h2 className="text-2xl lg:text-3xl font-serif-academic font-bold text-[#0F2342] mt-1">
-                {t.featuredSectionTitle}
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
-              {/* Lead Featured Book */}
-              <div className="lg:col-span-7 bg-white border border-[#E5DEC9] rounded-xl p-5 sm:p-6 lg:p-8 flex flex-col justify-between">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6">
-                  <div className="sm:col-span-4">
-                    <div className="aspect-[3/4] rounded-lg overflow-hidden border border-[#E5DEC9] bg-[#0F2342]">
-                      {leadItem.coverImage && !brokenImages[leadItem.id] ? (
-                        <img
-                          src={leadItem.coverImage}
-                          alt={leadItem.title[lang]}
-                          referrerPolicy="no-referrer"
-                          onError={() =>
-                            setBrokenImages((prev) => ({
-                              ...prev,
-                              [leadItem.id]: true,
-                            }))
-                          }
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full p-5 flex flex-col justify-between text-[#FBF9F5]">
-                          <span className="text-xs font-mono-tabular text-[#C59B27]">
-                            {leadItem.year}
-                          </span>
-                          <span className="font-serif-academic text-lg font-bold">
-                            {leadItem.title[lang]}
-                          </span>
-                          <span className="text-xs text-[#E5DEC9]">
-                            {leadItem.authors[0]}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+            <div className="rounded-2xl overflow-hidden border border-[#C59B27]/50 bg-gradient-to-br from-[#041E41] via-[#0A254C] to-[#04162E] text-white shadow-2xl">
+              {/* Top Exhibition Header Bar */}
+              <div className="px-4 sm:px-7 lg:px-10 py-4 sm:py-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#FDE68A] font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 text-[#C59B27] shrink-0" />
+                    <span>ARM OLTIN FONDI EKSPOZITSIYASI · 3D VITRINA</span>
                   </div>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif-academic font-bold text-white mt-0.5">
+                    {t.featuredSectionTitle}
+                  </h2>
+                </div>
 
-                  <div className="sm:col-span-8 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2.5">
-                      <div className="text-xs text-[#B8860B] font-semibold">
-                        {RESOURCE_TYPE_LABELS[leadItem.type][lang]} ·{' '}
-                        {leadItem.year} · {leadItem.pages} {t.pagesUnit}
-                      </div>
-                      <h3 className="text-2xl font-serif-academic font-bold text-[#0F2342] leading-snug">
-                        {leadItem.title[lang]}
-                      </h3>
-                      <p className="text-xs font-semibold text-[#1C1917]">
-                        {leadItem.authors.join(', ')}
-                      </p>
-                      <p className="text-sm text-[#57534E] leading-relaxed line-clamp-3">
-                        {leadItem.abstract[lang]}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-[#E5DEC9] flex flex-wrap items-center gap-2.5">
+                {/* Interactive Masterpiece Selector Pills */}
+                <div
+                  role="tablist"
+                  aria-label="Oltin fond vitrinasi kitoblari"
+                  className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0"
+                >
+                  {spotlightBooks.map((sb, idx) => {
+                    const isCurrent = sb.id === activeSpotlightBook.id;
+                    return (
                       <button
+                        key={sb.id}
                         type="button"
-                        onClick={() => onOpenReader(leadItem)}
-                        className="px-4 py-2 text-xs font-semibold bg-[#0F2342] text-[#FBF9F5] rounded-lg hover:bg-[#173461] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+                        role="tab"
+                        aria-selected={isCurrent}
+                        onClick={() => setSpotlightIndex(idx)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#C59B27] text-[#041E41] shadow-md'
+                            : 'bg-white/10 text-stone-200 hover:bg-white/20'
+                        }`}
                       >
-                        <BookOpen className="w-3.5 h-3.5 text-[#C59B27]" />
-                        {t.readOnline}
+                        0{idx + 1}.{' '}
+                        {sb.title[lang].length > 24
+                          ? `${sb.title[lang].slice(0, 24)}…`
+                          : sb.title[lang]}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenCitation(leadItem)}
-                        className="px-3.5 py-2 text-xs font-medium bg-[#F3EFE6] text-[#0F2342] border border-[#E5DEC9] rounded-lg hover:bg-[#E5DEC9]/70 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
-                      >
-                        <Quote className="w-3.5 h-3.5" />
-                        {t.citeWork}
-                      </button>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Secondary Featured Books */}
-              <div className="lg:col-span-5 flex flex-col justify-between gap-6">
-                {secondaryItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex-1 bg-white border border-[#E5DEC9] rounded-xl p-6 flex flex-col justify-between space-y-3"
-                  >
-                    <div className="space-y-2">
-                      <div className="text-xs text-[#B8860B] font-semibold">
-                        {RESOURCE_TYPE_LABELS[item.type][lang]} · {item.year} ·{' '}
-                        {item.pages} {t.pagesUnit}
-                      </div>
-                      <h3 className="text-xl font-serif-academic font-bold text-[#0F2342] leading-snug">
-                        {item.title[lang]}
-                      </h3>
-                      <p className="text-xs font-semibold text-[#1C1917]">
-                        {item.authors.join(', ')}
-                      </p>
-                      <p className="text-xs text-[#57534E] line-clamp-2 leading-relaxed">
-                        {item.abstract[lang]}
-                      </p>
-                    </div>
+              {/* Main 12-Column Exhibition Stage */}
+              <div className="p-5 sm:p-7 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+                {/* Left 4 Columns: 3D Hardcover Pedestal Stage */}
+                <div className="lg:col-span-4 flex flex-col items-center justify-center p-5 sm:p-6 rounded-2xl bg-[radial-gradient(circle_at_50%_35%,rgba(197,155,39,0.28),rgba(4,30,65,0.4)_72%)] border border-white/10">
+                  <Book3DCover
+                    resource={activeSpotlightBook}
+                    lang={lang}
+                    size="xl"
+                    onClick={() => onOpenReader(activeSpotlightBook)}
+                  />
+                  {/* Wooden Library Shelf Pedestal with Brass Edge */}
+                  <div className="w-full max-w-[260px] h-3.5 rounded-full tuaf-library-shelf-plank mt-2" />
+                  <p className="mt-3 text-[11px] font-mono-tabular text-[#FDE68A]/90 text-center">
+                    3D muqovani bosing — ikki betli jonli kitob ochiladi
+                  </p>
+                </div>
 
-                    <div className="pt-3 border-t border-[#E5DEC9] flex items-center justify-between gap-2">
-                      <span className="text-xs text-[#57534E]">
-                        {item.availableCopies} {t.copiesAvailable}
+                {/* Right 8 Columns: Curatorial Details, Chapter Previews & Actions */}
+                <div className="lg:col-span-8 space-y-5">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono-tabular text-[#FDE68A]">
+                    <span>
+                      {RESOURCE_TYPE_LABELS[activeSpotlightBook.type][lang]}
+                    </span>
+                    <span>·</span>
+                    <span>{activeSpotlightBook.year} yil</span>
+                    <span>·</span>
+                    <span>
+                      {activeSpotlightBook.pages} {t.pagesUnit}
+                    </span>
+                    <span>·</span>
+                    <span>UDK {activeSpotlightBook.udc}</span>
+                    <span>·</span>
+                    <span>
+                      {activeSpotlightBook.availableCopies}/
+                      {activeSpotlightBook.totalCopies} {t.copiesAvailable}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif-academic font-bold text-white leading-tight balance-text">
+                      {activeSpotlightBook.title[lang]}
+                    </h3>
+                    <p className="text-sm font-semibold text-[#38BDF8]">
+                      {activeSpotlightBook.authors.join(', ')} —{' '}
+                      <span className="text-stone-300 font-normal">
+                        {activeSpotlightBook.publisher}
                       </span>
-                      <div className="flex items-center gap-2">
+                    </p>
+                  </div>
+
+                  {/* Editorial Pull-Quote */}
+                  <blockquote className="p-4 rounded-xl bg-white/5 border border-[#C59B27]/35 font-serif-academic italic text-base sm:text-lg text-stone-100 leading-relaxed">
+                    «{activeSpotlightBook.abstract[lang]}»
+                  </blockquote>
+
+                  {/* Interactive Chapter Preview Strip */}
+                  <div className="space-y-2">
+                    <div className="text-[11px] uppercase tracking-widest text-stone-300 font-semibold">
+                      Ichki boblar mundarijasi (varaqlab o‘qish uchun bosing):
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {activeSpotlightBook.chapters.slice(0, 2).map((ch) => (
                         <button
+                          key={ch.number}
                           type="button"
-                          onClick={() => onOpenReader(item)}
-                          className="px-3.5 py-1.5 text-xs font-semibold bg-[#0F2342] text-[#FBF9F5] rounded-lg hover:bg-[#173461] transition-colors whitespace-nowrap shrink-0"
+                          onClick={() => onOpenReader(activeSpotlightBook)}
+                          className="p-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer"
                         >
-                          {t.readOnline}
+                          <span className="text-xs font-medium text-white truncate">
+                            {ch.title[lang]}
+                          </span>
+                          <span className="text-[11px] font-mono-tabular text-[#FDE68A] shrink-0">
+                            Bet {ch.pageStart} →
+                          </span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onOpenCitation(item)}
-                          className="px-3 py-1.5 text-xs font-medium bg-[#F3EFE6] text-[#0F2342] border border-[#E5DEC9] rounded-lg hover:bg-[#E5DEC9]/70 transition-colors whitespace-nowrap shrink-0"
-                        >
-                          {t.citeWork}
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+
+                  {/* Primary Action Bar */}
+                  <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onOpenReader(activeSpotlightBook)}
+                      className="px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold bg-[#C59B27] hover:bg-[#d6aa2e] text-[#041E41] rounded-xl flex items-center gap-2 shadow-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>Ikki betli kitobni ochish ({t.readOnline})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onDownloadPdf(activeSpotlightBook)}
+                      className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-[#0099B5] hover:bg-[#008199] text-white rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      {studentProfile ? (
+                        <Download className="w-4 h-4" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-[#FDE68A]" />
+                      )}
+                      <span>PDF yuklab olish</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onReserveBook(activeSpotlightBook)}
+                      disabled={reservedIds.has(activeSpotlightBook.id)}
+                      className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+                    >
+                      {reservedIds.has(activeSpotlightBook.id)
+                        ? t.reservedState
+                        : t.reserveBook}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenCitation(activeSpotlightBook)}
+                      className="px-3.5 py-2.5 text-xs font-medium bg-white/5 hover:bg-white/15 text-stone-200 border border-white/15 rounded-xl flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      <Quote className="w-3.5 h-3.5 text-[#C59B27]" />
+                      <span>{t.citeWork}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -851,20 +982,32 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       >
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5DEC9] pb-4 mb-6">
           <div>
-            <h2 className="text-2xl lg:text-3xl font-serif-academic font-bold text-[#0F2342]">
-              {t.catalogSectionTitle}
+            <h2 className="text-2xl lg:text-3xl font-serif-academic font-bold text-[#0F2342] tuaf-word-reveal">
+              <span className="tuaf-section-heading">
+                {t.catalogSectionTitle}
+              </span>
             </h2>
-            <p className="text-xs text-[#57534E] mt-1">
+            <p className="text-xs text-[#57534E] mt-1.5 tuaf-word-reveal tuaf-delay-1">
               {filteredResources.length} {t.resultsFound}
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {onOpenSpotlightSearch && (
+              <button
+                type="button"
+                onClick={onOpenSpotlightSearch}
+                className="px-3.5 py-2 text-xs font-semibold text-[#041E41] bg-[#F7F1E1] border border-[#C59B27]/60 rounded-lg hover:bg-[#EFE5C8] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>Tezkor qidiruv (Ctrl+K)</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowAdvanced((prev) => !prev)}
               aria-expanded={showAdvanced}
-              className="px-4 py-2 text-xs font-semibold text-[#0F2342] bg-[#F3EFE6] border border-[#E5DEC9] rounded-lg hover:bg-[#E5DEC9]/70 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0"
+              className="px-4 py-2 text-xs font-semibold text-[#0F2342] bg-[#F3EFE6] border border-[#E5DEC9] rounded-lg hover:bg-[#E5DEC9]/70 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               {t.advancedFilters}
@@ -878,7 +1021,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
               <button
                 type="button"
                 onClick={onResetFilters}
-                className="px-3.5 py-2 text-xs font-medium text-[#57534E] bg-white border border-[#E5DEC9] rounded-lg hover:text-[#0F2342] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+                className="px-3.5 py-2 text-xs font-medium text-[#57534E] bg-white border border-[#E5DEC9] rounded-lg hover:text-[#0F2342] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 {t.resetFilters}
@@ -1028,7 +1171,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           </div>
         )}
 
-        {/* Catalog Results Grid */}
+        {/* Catalog Results Grid with 3D Hardcover Books */}
         {filteredResources.length === 0 ? (
           <div className="bg-white border border-[#E5DEC9] rounded-xl p-12 text-center space-y-4">
             <p className="text-xl font-serif-academic font-bold text-[#0F2342]">
@@ -1047,55 +1190,70 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {filteredResources.map((item) => {
+            {filteredResources.map((item, idx) => {
               const isReserved = reservedIds.has(item.id);
               const isBookmarked = bookmarkedIds.has(item.id);
 
               return (
                 <article
                   key={item.id}
-                  className="bg-white border border-[#E5DEC9] rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-4 hover:border-[#B8860B] transition-colors"
+                  style={{ animationDelay: `${(idx % 6) * 70}ms` }}
+                  className="tuaf-card-interactive tuaf-card-reveal bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-6 flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2">
-                    {/* Clean Single-Line Metadata */}
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-[#57534E]">
-                      <span className="font-semibold text-[#B8860B]">
-                        {RESOURCE_TYPE_LABELS[item.type][lang]}
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span>{item.year}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{item.language}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>
-                        {item.pages} {t.pagesUnit}
-                      </span>
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                    {/* Tactile 3D Hardcover Book Miniature */}
+                    <div className="self-center sm:self-start shrink-0 pt-1">
+                      <Book3DCover
+                        resource={item}
+                        lang={lang}
+                        size="sm"
+                        onClick={() => onOpenReader(item)}
+                      />
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-xl font-serif-academic font-bold text-[#0F2342] leading-snug">
-                      {item.title[lang]}
-                    </h3>
+                    <div className="space-y-2 min-w-0 flex-1">
+                      {/* Clean Single-Line Metadata */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#57534E]">
+                        <span className="font-semibold text-[#B8860B]">
+                          {RESOURCE_TYPE_LABELS[item.type][lang]}
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>{item.year}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{item.language}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          {item.pages} {t.pagesUnit}
+                        </span>
+                      </div>
 
-                    {/* Authors */}
-                    <p className="text-xs font-semibold text-[#1C1917]">
-                      {item.authors.join(', ')}
-                    </p>
+                      {/* Title */}
+                      <h3 className="text-lg sm:text-xl font-serif-academic font-bold text-[#0F2342] leading-snug">
+                        <span className="tuaf-animated-title">
+                          {item.title[lang]}
+                        </span>
+                      </h3>
 
-                    {/* Concise 2-Line Description */}
-                    <p className="text-sm text-[#57534E] leading-relaxed line-clamp-2">
-                      {item.abstract[lang]}
-                    </p>
+                      {/* Authors */}
+                      <p className="text-xs font-semibold text-[#1C1917]">
+                        {item.authors.join(', ')}
+                      </p>
+
+                      {/* Concise 2-Line Description */}
+                      <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed line-clamp-2">
+                        {item.abstract[lang]}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Clean Action Footer */}
-                  <div className="pt-4 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-xs text-[#57534E]">
+                  <div className="pt-3.5 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between gap-2.5">
+                    <span className="text-xs font-mono-tabular text-[#57534E]">
                       {item.availableCopies}/{item.totalCopies}{' '}
                       {t.copiesAvailable}
                     </span>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <button
                         type="button"
                         onClick={() => onOpenReader(item)}
@@ -1131,7 +1289,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         type="button"
                         onClick={() => onReserveBook(item)}
                         disabled={isReserved}
-                        className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+                        className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                           isReserved
                             ? 'bg-[#F7F1E1] text-[#B8860B] border-[#B8860B] font-semibold'
                             : 'bg-white text-[#0F2342] border-[#E5DEC9] hover:bg-[#F3EFE6]'
@@ -1151,7 +1309,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         type="button"
                         onClick={() => onToggleBookmark(item.id)}
                         aria-label={`${t.bookmarkAdd}: ${item.title[lang]}`}
-                        className={`p-2 rounded-lg border transition-colors ${
+                        className={`p-2 rounded-lg border transition-colors cursor-pointer ${
                           isBookmarked
                             ? 'bg-[#0F2342] text-[#C59B27] border-[#0F2342]'
                             : 'bg-white text-[#57534E] border-[#E5DEC9] hover:text-[#0F2342]'
@@ -1170,3 +1328,4 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
     </div>
   );
 };
+

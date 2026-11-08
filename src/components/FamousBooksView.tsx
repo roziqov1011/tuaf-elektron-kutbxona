@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   BookOpen,
   CheckCircle2,
+  Clock,
   Download,
   Lock,
   Quote,
@@ -14,6 +15,7 @@ import {
   StudentProfile,
 } from '../types/library';
 import { FACULTY_LABELS, UI_TRANSLATIONS } from '../data/translations';
+import { Book3DCover } from './Book3DCover';
 
 interface FamousBooksViewProps {
   lang: Language;
@@ -21,6 +23,8 @@ interface FamousBooksViewProps {
   onDownloadPdf: (book: LibraryResource) => void;
   onOpenReader: (book: LibraryResource) => void;
   onOpenCitation: (book: LibraryResource) => void;
+  onReserveBook: (book: LibraryResource) => void;
+  reservedIds: Set<string>;
   downloadedIds: Set<string>;
 }
 
@@ -30,12 +34,13 @@ export function FamousBooksView({
   onDownloadPdf,
   onOpenReader,
   onOpenCitation,
+  onReserveBook,
+  reservedIds,
   downloadedIds,
 }: FamousBooksViewProps) {
   const [selectedField, setSelectedField] = useState<
     'all' | 'economics-finance' | 'pedagogy-languages' | 'humanities-social'
   >('all');
-  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   const t = UI_TRANSLATIONS[lang];
 
@@ -48,32 +53,34 @@ export function FamousBooksView({
       {/* Header & Field Filter Tabs */}
       <div className="border-b border-[#E5DEC9] pb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-5 sm:gap-6">
         <div className="space-y-1.5 max-w-2xl">
-          <div className="text-xs uppercase tracking-widest text-[#B8860B] font-semibold">
+          <div className="text-xs uppercase tracking-widest text-[#B8860B] font-semibold tuaf-word-reveal">
             {lang === 'ru'
-              ? 'ЗОЛОТОЙ ФОНД ПО НАПРАВЛЕНИЯМ'
+              ? 'ЗОЛОТОЙ ФОНД ПО НАПРАВЛЕНИЯМ · 3D ПОЛКА'
               : lang === 'en'
-              ? 'CURATED CLASSICS BY FIELD'
-              : 'YO‘NALISHLAR BO‘YICHA MASHHUR ADABIYOTLAR'}
+              ? 'CURATED CLASSICS BY FIELD · 3D BOOKSHELF'
+              : 'YO‘NALISHLAR BO‘YICHA MASHHUR ADABIYOTLAR · 3D JAVON'}
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif-academic font-bold text-[#0F2342]">
-            {lang === 'uz'
-              ? 'Sohalar bo‘yicha mashhur kitoblar (PDF)'
-              : lang === 'ru'
-              ? 'Популярные книги по направлениям (PDF)'
-              : 'Famous Books by Academic Field (PDF)'}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif-academic font-bold text-[#0F2342] tuaf-word-reveal tuaf-delay-1">
+            <span className="tuaf-section-heading">
+              {lang === 'uz'
+                ? 'Sohalar bo‘yicha mashhur kitoblar (3D Javon va PDF)'
+                : lang === 'ru'
+                ? 'Популярные книги по направлениям (3D-полка и PDF)'
+                : 'Famous Books by Academic Field (3D Shelf & PDF)'}
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#57534E]">
+          <p className="text-xs sm:text-sm text-[#57534E] tuaf-word-reveal tuaf-delay-2">
             {studentProfile
               ? lang === 'ru'
-                ? `Вы вошли как ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}). Скачивание PDF открыто.`
+                ? `Вы вошли как ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}). Скачивание PDF и предварительная бронь открыты.`
                 : lang === 'en'
-                ? `Signed in as ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}). Full PDF downloads unlocked.`
-                : `Siz ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}) sifatida tizimdasiz — barcha PDF kitoblarni bepul yuklab olishingiz mumkin.`
+                ? `Signed in as ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}). Full PDF downloads and book reservations unlocked.`
+                : `Siz ${studentProfile.fullName} (HEMIS: ${studentProfile.hemisId}) sifatida tizimdasiz — PDF yuklab olish va kitobni muddat tanlab band qilish ochiq.`
               : lang === 'ru'
-              ? 'Полное скачивание PDF-книг доступно только зарегистрированным студентам университета.'
+              ? 'Нажмите на любую 3D-книгу для чтения на развороте из двух страниц или войдите для скачивания PDF.'
               : lang === 'en'
-              ? 'Full PDF downloads are available exclusively to registered university students.'
-              : 'PDF kitoblarni yuklab olish faqat ro‘yxatdan o‘tgan talabalar uchun ochiq.'}
+              ? 'Click any 3D hardcover book to open the two-page spread reader, or sign in for full PDF downloads.'
+              : 'Istalgan 3D kitobni bosib ikki betli jonli mutolaa oynasida varaqlang yoki PDF yuklab olish uchun tizimga kiring.'}
           </p>
         </div>
 
@@ -123,41 +130,27 @@ export function FamousBooksView({
         </div>
       </div>
 
-      {/* Books Grid with Cover Images & PDF Download */}
+      {/* Books Grid with 3D Hardcover Books on Library Shelf */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7">
-        {filteredBooks.map((book) => {
+        {filteredBooks.map((book, idx) => {
           const isDownloaded = downloadedIds.has(book.id);
+          const isReserved = reservedIds.has(book.id);
           return (
             <article
               key={book.id}
-              className="border border-[#E5DEC9] bg-white rounded-xl overflow-hidden flex flex-col justify-between shadow-sm hover:border-[#B8860B] transition-colors"
+              style={{ animationDelay: `${idx * 85}ms` }}
+              className="tuaf-card-interactive tuaf-card-reveal border border-[#E5DEC9] bg-white rounded-xl overflow-hidden flex flex-col justify-between shadow-sm"
             >
               <div>
-                {/* High-Res Book Cover Image */}
-                <div className="relative aspect-[4/3] bg-[#0F2342] overflow-hidden border-b border-[#E5DEC9]">
-                  {book.coverImage && !brokenImages[book.id] ? (
-                    <img
-                      src={book.coverImage}
-                      alt={book.title[lang]}
-                      referrerPolicy="no-referrer"
-                      onError={() =>
-                        setBrokenImages((prev) => ({
-                          ...prev,
-                          [book.id]: true,
-                        }))
-                      }
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full p-6 flex flex-col justify-between text-white">
-                      <span className="text-xs font-mono-tabular text-[#C59B27]">
-                        {book.programCode} · {book.year}
-                      </span>
-                      <span className="font-serif-academic text-lg font-bold">
-                        {book.title[lang]}
-                      </span>
-                    </div>
-                  )}
+                {/* 3D Hardcover Book Stage on Oak Shelf */}
+                <div className="pt-6 pb-4 px-5 bg-gradient-to-b from-[#041E41] via-[#0B2D5C] to-[#081C38] border-b border-[#E5DEC9] flex flex-col items-center">
+                  <Book3DCover
+                    resource={book}
+                    lang={lang}
+                    size="lg"
+                    onClick={() => onOpenReader(book)}
+                  />
+                  <div className="w-full max-w-[220px] h-3 rounded-full tuaf-library-shelf-plank mt-1.5" />
                 </div>
 
                 {/* Book Metadata & Abstract */}
@@ -179,7 +172,9 @@ export function FamousBooksView({
                   </div>
 
                   <h2 className="font-serif-academic font-bold text-[#0F2342] text-xl leading-snug">
-                    {book.title[lang]}
+                    <span className="tuaf-animated-title">
+                      {book.title[lang]}
+                    </span>
                   </h2>
 
                   <p className="text-xs font-semibold text-[#1C1917]">
@@ -192,8 +187,8 @@ export function FamousBooksView({
                 </div>
               </div>
 
-              {/* Action Buttons: PDF Download (Student Auth Gated) + Online Reader */}
-              <div className="px-5 pb-5 pt-3 border-t border-[#E5DEC9] space-y-2.5">
+              {/* Action Buttons: PDF Download + Pre-Reserve with Duration + Online Reader */}
+              <div className="px-5 pb-5 pt-3 border-t border-[#E5DEC9] space-y-2">
                 <button
                   type="button"
                   onClick={() => onDownloadPdf(book)}
@@ -237,6 +232,28 @@ export function FamousBooksView({
                       </span>
                     </>
                   )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isReserved}
+                  onClick={() => onReserveBook(book)}
+                  className={`w-full px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-colors cursor-pointer ${
+                    isReserved
+                      ? 'bg-[#F7F1E1] border-[#B8860B] text-[#0F2342]'
+                      : 'bg-white hover:bg-[#FBF9F5] border-[#0F2342] text-[#0F2342]'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-[#B8860B]" />
+                  <span>
+                    {isReserved
+                      ? t.reservedState
+                      : lang === 'ru'
+                      ? 'Забронировать книгу (выбор срока)'
+                      : lang === 'en'
+                      ? 'Pre-Reserve Book (Select Duration)'
+                      : 'Kitobni oldindan band qilish (muddat tanlash)'}
+                  </span>
                 </button>
 
                 <div className="flex items-center gap-2">

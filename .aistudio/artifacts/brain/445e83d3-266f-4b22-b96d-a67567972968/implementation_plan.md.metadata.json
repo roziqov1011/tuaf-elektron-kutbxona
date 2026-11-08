@@ -1,6 +1,6 @@
 {
-  "summary":  "Implementation plan to add Famous Books section with PDF download restricted to registered students.",
-  "updatedAt":  "2026-11-07T05:50:53.726395667Z",
+  "summary":  "TUAF Elektron Kutubxonasi uchun @tuaf_arm_bot Telegram bot ekotizimi rejasi: veb-ilova ichida to‘liq ishlovchi interaktiv Telegram bot simulyatori (klassik inline tugmalar va matnli buyruqlar asosida kitob qidirish, PDF yuklash, muddatli kitob band qilish, o‘quv zalidan joy band qilish, QR-talon olish va ijara muddati eslatmalari) hamda real serverga o‘rnatish uchun tayyor Node.js / Grammy (Telegraf) bot kodi va sozlash yo‘riqnomasi.",
+  "updatedAt":  "2026-11-08T16:23:19.225328797Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

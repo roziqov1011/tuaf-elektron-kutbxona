@@ -1,4 +1,9 @@
-import { Language, LibraryResource, StudentProfile } from '../types/library';
+import {
+  Language,
+  LibraryResource,
+  QrPassTicketItem,
+  StudentProfile,
+} from '../types/library';
 
 function sanitizePdfText(input: string): string {
   return input
@@ -132,3 +137,115 @@ export function downloadResourcePdf(
 
   return `${safeFileName}.pdf`;
 }
+
+export function downloadTicketPassPdf(
+  ticket: QrPassTicketItem,
+  lang: Language
+): string {
+  const isBook = ticket.kind === 'book';
+  const ticketCode = isBook
+    ? ticket.loan.ticketCode || 'TUAF-KTB-PASS'
+    : ticket.seat.ticketCode || 'TUAF-JOY-PASS';
+
+  const contentLines: string[] = [
+    '========================================================================',
+    'TURON UNIVERSITY - ANDIJON FILIALI (TUAF.UZ)',
+    'AXBOROT-RESURS MARKAZI | ELEKTRON RUXSATNOMA VA QR TALON',
+    '========================================================================',
+    `TALON KODI (QR PASS): #${sanitizePdfText(ticketCode)}`,
+    `TALON TURI: ${
+      isBook
+        ? 'KITOB OLDINDAN BANDLOV TALONI (BOOK LOAN PASS)'
+        : "O'QUV ZALI JOY BANDLOV TALONI (READING HALL SEAT PASS)"
+    }`,
+    '------------------------------------------------------------------------',
+  ];
+
+  if (isBook) {
+    const l = ticket.loan;
+    contentLines.push(
+      `Talaba: ${sanitizePdfText(l.studentName)}`,
+      `Talaba ID (HEMIS): ${sanitizePdfText(l.studentId)}`,
+      `Kitob nomi: ${sanitizePdfText(l.resourceTitle[lang] || l.resourceTitle.uz)}`,
+      `Muallif(lar): ${sanitizePdfText(l.authors.join(', '))}`,
+      `Shifr / UDK: ${sanitizePdfText(l.callNumber)}`,
+      `Olib ketish sanasi: ${sanitizePdfText(l.pickupDate)}`,
+      `Topshirish muddati (Due Date): ${sanitizePdfText(l.dueDate)} (${l.durationDays || 14} kun)`,
+      `Qabul qilish joyi: ${sanitizePdfText(l.pickupLocation || '1-qavat, ARM Abonement Punkti (104-xona)')}`,
+      `Holati: ${l.status === 'ready-for-pickup' ? 'Olib ketishga tayyor' : 'Faol bandlov (Talabada)'}`
+    );
+  } else {
+    const s = ticket.seat;
+    contentLines.push(
+      `Talaba: ${sanitizePdfText(s.studentName)}`,
+      `Talaba ID (HEMIS): ${sanitizePdfText(s.studentId)}`,
+      `O'quv zali: ${sanitizePdfText(s.hallName[lang] || s.hallName.uz)}`,
+      `Band qilingan stol / joy: ${sanitizePdfText(s.seatCode)}`,
+      `Sana va vaqt: ${sanitizePdfText(s.date)} | ${sanitizePdfText(s.timeSlot)}`,
+      `Davomiyligi: ${sanitizePdfText(s.durationHours || 'Standart smena')}`,
+      `Maqsad: ${sanitizePdfText(s.purpose)}`,
+      `Holati: Tasdiqlangan (Confirmed)`
+    );
+  }
+
+  contentLines.push(
+    '------------------------------------------------------------------------',
+    'ESLATMA: Kutubxonaga kirishda yoki kitobni qabul qilishda ushbu talon',
+    'kodini (#TUAF-...) ARM xodimiga ko\'rsating.',
+    'Manzil: Andijon shahar, Paxtakor MFY, A.Yuldashev ko\'chasi, 58-a-uy',
+    'Rasmiy veb-sayt: https://tuaf.uz  |  Tel: +998 74 200 00 25',
+    '========================================================================'
+  );
+
+  const streamCommands: string[] = ['BT', '/F1 11 Tf', '50 770 Td', '16 TL'];
+  contentLines.forEach((line, index) => {
+    if (index === 0) {
+      streamCommands.push(`(${line}) Tj`);
+    } else {
+      streamCommands.push(`T* (${line}) Tj`);
+    }
+  });
+  streamCommands.push('ET');
+
+  const streamData = streamCommands.join('\n');
+
+  const objects: string[] = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 595 842] /Contents 5 0 R >>\nendobj',
+    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj',
+    `5 0 obj\n<< /Length ${streamData.length} >>\nstream\n${streamData}\nendstream\nendobj`,
+  ];
+
+  let pdf = '%PDF-1.4\n';
+  const offsets: number[] = [0];
+
+  for (const obj of objects) {
+    offsets.push(pdf.length);
+    pdf += obj + '\n';
+  }
+
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += '0000000000 65535 f \n';
+  for (let i = 1; i <= objects.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const fileName = `${ticketCode.toLowerCase()}-ruxsatnoma.pdf`;
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+  return fileName;
+}
+
