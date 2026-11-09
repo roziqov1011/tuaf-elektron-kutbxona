@@ -38,6 +38,7 @@ import {
   findReservationsByQuery,
   validateNewResourceForm,
 } from '../utils/libraryLogic';
+import { AdminInfographicCharts } from './AdminInfographicCharts';
 
 export type AdminSubTab = 'scanner-loans' | 'halls-monitor' | 'catalog-manager';
 
@@ -163,13 +164,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     if (loanStatusFilter === 'all') return matchedLoans;
     return matchedLoans.filter((l) => l.status === loanStatusFilter);
   }, [matchedLoans, loanStatusFilter]);
-
-  const readyForPickupCount = loans.filter(
-    (l) => l.status === 'ready-for-pickup'
-  ).length;
-  const activeHandedOverCount = loans.filter(
-    (l) => l.status === 'active'
-  ).length;
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -559,56 +553,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       </div>
 
-      {/* 4 Admin Summary Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-        <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-5">
-          <div className="text-xs text-[#57534E]">
-            Topshirishni kutayotgan kitoblar
-          </div>
-          <div className="text-2xl sm:text-3xl font-serif-academic font-bold text-emerald-700 font-mono-tabular mt-1">
-            {readyForPickupCount} ta
-          </div>
-          <div className="text-[11px] text-[#57534E] mt-1">
-            104-xonada tayyorlab qo‘yilgan
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-5">
-          <div className="text-xs text-[#57534E]">
-            Talabalarning qo‘lidagi kitoblar
-          </div>
-          <div className="text-2xl sm:text-3xl font-serif-academic font-bold text-[#0F2342] font-mono-tabular mt-1">
-            {activeHandedOverCount} ta
-          </div>
-          <div className="text-[11px] text-[#0099B5] font-semibold mt-1">
-            Muddatli abonementda
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-5">
-          <div className="text-xs text-[#57534E]">
-            O‘quv zalida band qilingan joylar
-          </div>
-          <div className="text-2xl sm:text-3xl font-serif-academic font-bold text-[#B8860B] font-mono-tabular mt-1">
-            {activeSeatBookings.length} ta
-          </div>
-          <div className="text-[11px] text-[#57534E] mt-1">
-            Jami 36 ta interaktiv o‘rin
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-5">
-          <div className="text-xs text-[#57534E]">
-            Elektron katalogdagi nashrlar
-          </div>
-          <div className="text-2xl sm:text-3xl font-serif-academic font-bold text-[#0F2342] font-mono-tabular mt-1">
-            {resources.length} ta
-          </div>
-          <div className="text-[11px] text-emerald-700 font-semibold mt-1">
-            + Yangi darslik qo‘shish ochiq
-          </div>
-        </div>
-      </div>
+      {/* Interactive Infographic Analytics & Groups/Debts/Books Dashboard Section */}
+      <AdminInfographicCharts
+        lang={lang}
+        resources={resources}
+        loans={loans}
+        seats={seats}
+        seatReservations={seatReservations}
+        onUpdateResourceCopies={onUpdateResourceCopies}
+      />
 
       {/* 3-Tab Admin Navigation */}
       <div
