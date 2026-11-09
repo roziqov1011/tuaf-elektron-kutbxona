@@ -560,58 +560,115 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
       )}
 
-      {/* Clean Degree Programs Selector (12 Bachelor + 8 Master's) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="bg-white border border-[#E5DEC9] rounded-xl p-4 sm:p-6 lg:p-8 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5DEC9] pb-4">
+      {/* SECTION 2: Unified Electronic Catalog & Degree Program Filters — Filtered Books Appear Immediately Below Filter Controls */}
+      <section
+        id="catalog-explorer"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 space-y-6"
+      >
+        {/* Filter Control Hub Card */}
+        <div className="bg-white border border-[#E5DEC9] rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xs space-y-5">
+          {/* Top Header: Title, Live Results Counter & Filter Action Buttons */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#E5DEC9] pb-4">
             <div>
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-serif-academic font-bold text-[#0F2342] flex items-center gap-2 tuaf-word-reveal">
-                <GraduationCap className="w-5 h-5 text-[#B8860B] shrink-0" />
-                <span className="tuaf-section-heading">{t.programsSectionTitle}</span>
-              </h2>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif-academic font-bold text-[#0F2342] flex items-center gap-2 tuaf-word-reveal">
+                  <GraduationCap className="w-6 h-6 text-[#B8860B] shrink-0" />
+                  <span className="tuaf-section-heading">
+                    {t.catalogSectionTitle} va Ta’lim Yo‘nalishlari
+                  </span>
+                </h2>
+                <span className="px-2.5 py-1 rounded-full bg-[#041E41] text-[#FDE68A] font-mono-tabular text-xs font-bold">
+                  {filteredResources.length} {t.resultsFound}
+                </span>
+              </div>
               <p className="text-xs text-[#57534E] mt-1.5 tuaf-word-reveal tuaf-delay-1">
-                {t.programsSectionSubtitle}
+                {t.programsSectionSubtitle} — yo‘nalish tugmasini bosing, tegishli kitoblar darhol pastda chiqadi.
               </p>
             </div>
 
-            <div
-              role="group"
-              aria-label="Ta’lim bosqichi"
-              className="flex items-center gap-1 p-1 bg-[#F3EFE6] border border-[#E5DEC9] rounded-lg self-start w-full sm:w-auto"
-            >
+            {/* Right Controls: Bachelor/Master Switch + Spotlight + Advanced Filter Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                role="group"
+                aria-label="Ta’lim bosqichi"
+                className="flex items-center gap-1 p-1 bg-[#F3EFE6] border border-[#E5DEC9] rounded-lg"
+              >
+                <button
+                  type="button"
+                  onClick={() => setProgramLevelTab('bachelor')}
+                  className={`px-3 sm:px-3.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    programLevelTab === 'bachelor'
+                      ? 'bg-[#0F2342] text-[#FBF9F5] font-semibold'
+                      : 'text-[#57534E] hover:text-[#0F2342]'
+                  }`}
+                >
+                  {lang === 'ru'
+                    ? 'Бакалавриат (12)'
+                    : lang === 'en'
+                    ? 'Bachelor’s (12)'
+                    : 'Bakalavriat (12)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProgramLevelTab('master')}
+                  className={`px-3 sm:px-3.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    programLevelTab === 'master'
+                      ? 'bg-[#0F2342] text-[#FBF9F5] font-semibold'
+                      : 'text-[#57534E] hover:text-[#0F2342]'
+                  }`}
+                >
+                  {lang === 'ru'
+                    ? 'Магистратура (8)'
+                    : lang === 'en'
+                    ? 'Master’s (8)'
+                    : 'Magistratura (8)'}
+                </button>
+              </div>
+
+              {onOpenSpotlightSearch && (
+                <button
+                  type="button"
+                  onClick={onOpenSpotlightSearch}
+                  className="px-3.5 py-2 text-xs font-semibold text-[#041E41] bg-[#F7F1E1] border border-[#C59B27]/60 rounded-lg hover:bg-[#EFE5C8] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
+                  <span>Tezkor qidiruv (Ctrl+K)</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setProgramLevelTab('bachelor')}
-                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  programLevelTab === 'bachelor'
-                    ? 'bg-[#0F2342] text-[#FBF9F5] font-semibold'
-                    : 'text-[#57534E] hover:text-[#0F2342]'
+                onClick={() => setShowAdvanced((prev) => !prev)}
+                aria-expanded={showAdvanced}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg border flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  showAdvanced
+                    ? 'bg-[#0F2342] text-white border-[#0F2342]'
+                    : 'text-[#0F2342] bg-[#F3EFE6] border-[#E5DEC9] hover:bg-[#E5DEC9]/70'
                 }`}
               >
-                {lang === 'ru'
-                  ? 'Бакалавриат (12)'
-                  : lang === 'en'
-                  ? 'Bachelor’s (12)'
-                  : 'Bakalavriat (12)'}
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{t.advancedFilters}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setProgramLevelTab('master')}
-                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  programLevelTab === 'master'
-                    ? 'bg-[#0F2342] text-[#FBF9F5] font-semibold'
-                    : 'text-[#57534E] hover:text-[#0F2342]'
-                }`}
-              >
-                {lang === 'ru'
-                  ? 'Магистратура (8)'
-                  : lang === 'en'
-                  ? 'Master’s (8)'
-                  : 'Magistratura (8)'}
-              </button>
+
+              {(filters.query !== '' ||
+                filters.faculty !== 'all' ||
+                filters.programCode !== 'all' ||
+                filters.type !== 'all' ||
+                filters.openAccessOnly ||
+                filters.peerReviewedOnly) && (
+                <button
+                  type="button"
+                  onClick={onResetFilters}
+                  className="px-3.5 py-2 text-xs font-semibold text-rose-800 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{t.resetFilters}</span>
+                </button>
+              )}
             </div>
           </div>
 
+          {/* 2-Row Counter-Directional Degree Program Filter Slider */}
           {(() => {
             const midpoint = Math.ceil(displayedPrograms.length / 2);
             const firstRowPrograms = displayedPrograms.slice(0, midpoint);
@@ -663,7 +720,6 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 aria-label="Ta’lim yo‘nalishlari avto-slayderi"
                 className="relative overflow-hidden py-1 space-y-3"
               >
-                {/* Soft left/right fade masks */}
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-14 z-10 bg-gradient-to-r from-white to-transparent"
@@ -694,485 +750,221 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             );
           })()}
 
-          {/* Sohalar bo'yicha mashhur kitoblar — 3D Tirik Javon (Living 3D Bookshelf) */}
-          <div className="pt-6 border-t border-[#E5DEC9] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="text-lg sm:text-xl font-serif-academic font-bold text-[#0F2342]">
-                  {lang === 'ru'
-                    ? 'Популярные учебники по сферам (3D-полка и скачивание PDF)'
-                    : lang === 'en'
-                    ? 'Famous Textbooks by Field (3D Hardcover Shelf & PDF)'
-                    : 'Sohalar bo‘yicha mashhur kitoblar — 3D Kutubxona Javoni'}
-                </h3>
-                <p className="text-xs text-[#57534E]">
-                  {studentProfile
-                    ? `Talaba hisobi faol (${studentProfile.fullName}) — kitobni bosing yoki PDF formatda yuklab oling`
-                    : 'Har bir 3D kitobni ikki betli mutolaa oynasida varaqlab ko‘rishingiz yoki PDF yuklab olishingiz mumkin'}
-                </p>
-              </div>
-              {onNavigateTab && (
-                <button
-                  type="button"
-                  onClick={() => onNavigateTab('famous-books')}
-                  className="text-xs font-semibold text-[#0099B5] hover:underline self-start sm:self-center cursor-pointer"
-                >
-                  {lang === 'ru'
-                    ? 'Все популярные книги →'
-                    : lang === 'en'
-                    ? 'View all famous books →'
-                    : 'Barcha mashhur kitoblar →'}
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-              {FAMOUS_BOOKS.slice(0, 4).map((book, idx) => {
-                const isDownloaded = downloadedIds.has(book.id);
+          {/* Quick Resource Type & Faculty Filter Strip */}
+          <div className="pt-3 border-t border-[#E5DEC9] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {resourceTypes.map((rt) => {
+                const isActiveType = filters.type === rt;
                 return (
-                  <div
-                    key={book.id}
-                    style={{ animationDelay: `${idx * 85}ms` }}
-                    className="tuaf-card-interactive tuaf-card-reveal bg-gradient-to-b from-[#FBF9F5] to-[#F3EFE6] border border-[#E5DEC9] rounded-xl overflow-hidden flex flex-col justify-between"
+                  <button
+                    key={rt}
+                    type="button"
+                    onClick={() =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        type: rt,
+                      }))
+                    }
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                      isActiveType
+                        ? 'bg-[#041E41] text-[#FDE68A]'
+                        : 'bg-[#F3EFE6] text-[#57534E] hover:text-[#041E41]'
+                    }`}
                   >
-                    <div>
-                      {/* 3D Book Standing on Library Oak Pedestal */}
-                      <div className="pt-5 pb-3 px-4 bg-[radial-gradient(circle_at_50%_25%,rgba(197,155,39,0.16),transparent_70%)] flex flex-col items-center">
-                        <Book3DCover
-                          resource={book}
-                          lang={lang}
-                          size="md"
-                          onClick={() => onOpenReader(book)}
-                        />
-                        <div className="w-full h-2.5 rounded-full tuaf-library-shelf-plank mt-1" />
-                      </div>
-
-                      <div className="p-3.5 space-y-1.5">
-                        <div className="text-[11px] font-semibold text-[#B8860B]">
-                          {
-                            FACULTY_LABELS[
-                              book.faculty as Exclude<FacultyId, 'all'>
-                            ][lang]
-                          }
-                        </div>
-                        <h4 className="font-serif-academic font-bold text-[#0F2342] text-sm sm:text-base leading-snug line-clamp-2">
-                          <span className="tuaf-animated-title">
-                            {book.title[lang]}
-                          </span>
-                        </h4>
-                        <p className="text-xs text-[#57534E] truncate">
-                          {book.authors.join(', ')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-3.5 pt-0 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onDownloadPdf(book)}
-                        className="flex-1 py-2 px-2.5 bg-[#0F2342] hover:bg-[#173461] text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                      >
-                        {studentProfile ? (
-                          <Download className="w-3.5 h-3.5 text-[#38BDF8]" />
-                        ) : (
-                          <Lock className="w-3.5 h-3.5 text-[#C59B27]" />
-                        )}
-                        <span>
-                          {isDownloaded ? 'Yuklandi (PDF)' : 'PDF yuklash'}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenReader(book)}
-                        className="py-2 px-2.5 bg-white hover:bg-[#F3EFE6] text-[#0F2342] border border-[#E5DEC9] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                      >
-                        {t.readOnline}
-                      </button>
-                    </div>
-                  </div>
+                    {RESOURCE_TYPE_LABELS[rt][lang]}
+                  </button>
                 );
               })}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ARM Oltin Fondi — Interaktiv 3D Kitob Vitrinasi (Museum-Style Curated Exhibition Spotlight) */}
-      {activeSpotlightBook &&
-        filters.query === '' &&
-        filters.faculty === 'all' &&
-        filters.programCode === 'all' && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-            <div className="rounded-2xl overflow-hidden border border-[#C59B27]/50 bg-gradient-to-br from-[#041E41] via-[#0A254C] to-[#04162E] text-white shadow-2xl">
-              {/* Top Exhibition Header Bar */}
-              <div className="px-4 sm:px-7 lg:px-10 py-4 sm:py-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#FDE68A] font-semibold">
-                    <Sparkles className="w-3.5 h-3.5 text-[#C59B27] shrink-0" />
-                    <span>ARM OLTIN FONDI EKSPOZITSIYASI · 3D VITRINA</span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif-academic font-bold text-white mt-0.5">
-                    {t.featuredSectionTitle}
-                  </h2>
-                </div>
-
-                {/* Interactive Masterpiece Selector Pills */}
-                <div
-                  role="tablist"
-                  aria-label="Oltin fond vitrinasi kitoblari"
-                  className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0"
-                >
-                  {spotlightBooks.map((sb, idx) => {
-                    const isCurrent = sb.id === activeSpotlightBook.id;
-                    return (
-                      <button
-                        key={sb.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={isCurrent}
-                        onClick={() => setSpotlightIndex(idx)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                          isCurrent
-                            ? 'bg-[#C59B27] text-[#041E41] shadow-md'
-                            : 'bg-white/10 text-stone-200 hover:bg-white/20'
-                        }`}
-                      >
-                        0{idx + 1}.{' '}
-                        {sb.title[lang].length > 24
-                          ? `${sb.title[lang].slice(0, 24)}…`
-                          : sb.title[lang]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Main 12-Column Exhibition Stage */}
-              <div className="p-5 sm:p-7 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-                {/* Left 4 Columns: 3D Hardcover Pedestal Stage */}
-                <div className="lg:col-span-4 flex flex-col items-center justify-center p-5 sm:p-6 rounded-2xl bg-[radial-gradient(circle_at_50%_35%,rgba(197,155,39,0.28),rgba(4,30,65,0.4)_72%)] border border-white/10">
-                  <Book3DCover
-                    resource={activeSpotlightBook}
-                    lang={lang}
-                    size="xl"
-                    onClick={() => onOpenReader(activeSpotlightBook)}
-                  />
-                  {/* Wooden Library Shelf Pedestal with Brass Edge */}
-                  <div className="w-full max-w-[260px] h-3.5 rounded-full tuaf-library-shelf-plank mt-2" />
-                  <p className="mt-3 text-[11px] font-mono-tabular text-[#FDE68A]/90 text-center">
-                    3D muqovani bosing — ikki betli jonli kitob ochiladi
-                  </p>
-                </div>
-
-                {/* Right 8 Columns: Curatorial Details, Chapter Previews & Actions */}
-                <div className="lg:col-span-8 space-y-5">
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono-tabular text-[#FDE68A]">
-                    <span>
-                      {RESOURCE_TYPE_LABELS[activeSpotlightBook.type][lang]}
-                    </span>
-                    <span>·</span>
-                    <span>{activeSpotlightBook.year} yil</span>
-                    <span>·</span>
-                    <span>
-                      {activeSpotlightBook.pages} {t.pagesUnit}
-                    </span>
-                    <span>·</span>
-                    <span>UDK {activeSpotlightBook.udc}</span>
-                    <span>·</span>
-                    <span>
-                      {activeSpotlightBook.availableCopies}/
-                      {activeSpotlightBook.totalCopies} {t.copiesAvailable}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif-academic font-bold text-white leading-tight balance-text">
-                      {activeSpotlightBook.title[lang]}
-                    </h3>
-                    <p className="text-sm font-semibold text-[#38BDF8]">
-                      {activeSpotlightBook.authors.join(', ')} —{' '}
-                      <span className="text-stone-300 font-normal">
-                        {activeSpotlightBook.publisher}
-                      </span>
-                    </p>
-                  </div>
-
-                  {/* Editorial Pull-Quote */}
-                  <blockquote className="p-4 rounded-xl bg-white/5 border border-[#C59B27]/35 font-serif-academic italic text-base sm:text-lg text-stone-100 leading-relaxed">
-                    «{activeSpotlightBook.abstract[lang]}»
-                  </blockquote>
-
-                  {/* Interactive Chapter Preview Strip */}
-                  <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-widest text-stone-300 font-semibold">
-                      Ichki boblar mundarijasi (varaqlab o‘qish uchun bosing):
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {activeSpotlightBook.chapters.slice(0, 2).map((ch) => (
-                        <button
-                          key={ch.number}
-                          type="button"
-                          onClick={() => onOpenReader(activeSpotlightBook)}
-                          className="p-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                        >
-                          <span className="text-xs font-medium text-white truncate">
-                            {ch.title[lang]}
-                          </span>
-                          <span className="text-[11px] font-mono-tabular text-[#FDE68A] shrink-0">
-                            Bet {ch.pageStart} →
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Primary Action Bar */}
-                  <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
-                    <button
-                      type="button"
-                      onClick={() => onOpenReader(activeSpotlightBook)}
-                      className="px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold bg-[#C59B27] hover:bg-[#d6aa2e] text-[#041E41] rounded-xl flex items-center gap-2 shadow-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      <span>Ikki betli kitobni ochish ({t.readOnline})</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onDownloadPdf(activeSpotlightBook)}
-                      className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-[#0099B5] hover:bg-[#008199] text-white rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      {studentProfile ? (
-                        <Download className="w-4 h-4" />
-                      ) : (
-                        <Lock className="w-4 h-4 text-[#FDE68A]" />
-                      )}
-                      <span>PDF yuklab olish</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onReserveBook(activeSpotlightBook)}
-                      disabled={reservedIds.has(activeSpotlightBook.id)}
-                      className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
-                    >
-                      {reservedIds.has(activeSpotlightBook.id)
-                        ? t.reservedState
-                        : t.reserveBook}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onOpenCitation(activeSpotlightBook)}
-                      className="px-3.5 py-2.5 text-xs font-medium bg-white/5 hover:bg-white/15 text-stone-200 border border-white/15 rounded-xl flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      <Quote className="w-3.5 h-3.5 text-[#C59B27]" />
-                      <span>{t.citeWork}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-      {/* Main Catalog Section */}
-      <section
-        id="catalog-explorer"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 sm:pb-12"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5DEC9] pb-4 mb-6">
-          <div>
-            <h2 className="text-2xl lg:text-3xl font-serif-academic font-bold text-[#0F2342] tuaf-word-reveal">
-              <span className="tuaf-section-heading">
-                {t.catalogSectionTitle}
-              </span>
-            </h2>
-            <p className="text-xs text-[#57534E] mt-1.5 tuaf-word-reveal tuaf-delay-1">
-              {filteredResources.length} {t.resultsFound}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {onOpenSpotlightSearch && (
-              <button
-                type="button"
-                onClick={onOpenSpotlightSearch}
-                className="px-3.5 py-2 text-xs font-semibold text-[#041E41] bg-[#F7F1E1] border border-[#C59B27]/60 rounded-lg hover:bg-[#EFE5C8] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
-                <span>Tezkor qidiruv (Ctrl+K)</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowAdvanced((prev) => !prev)}
-              aria-expanded={showAdvanced}
-              className="px-4 py-2 text-xs font-semibold text-[#0F2342] bg-[#F3EFE6] border border-[#E5DEC9] rounded-lg hover:bg-[#E5DEC9]/70 flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              {t.advancedFilters}
-            </button>
-            {(filters.query !== '' ||
+            {/* Active Filter Status Pill */}
+            {(filters.programCode !== 'all' ||
               filters.faculty !== 'all' ||
-              filters.programCode !== 'all' ||
-              filters.type !== 'all' ||
-              filters.openAccessOnly ||
-              filters.peerReviewedOnly) && (
-              <button
-                type="button"
-                onClick={onResetFilters}
-                className="px-3.5 py-2 text-xs font-medium text-[#57534E] bg-white border border-[#E5DEC9] rounded-lg hover:text-[#0F2342] flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                {t.resetFilters}
-              </button>
+              filters.query !== '') && (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {filters.programCode !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF9E7] border border-[#C59B27] text-[#041E41] font-semibold">
+                    <span>
+                      Yo‘nalish:{' '}
+                      {TUAF_OFFICIAL_PROGRAMS.find(
+                        (p) => p.code === filters.programCode
+                      )?.name[lang] || filters.programCode}{' '}
+                      ({filters.programCode.split('-')[0]})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFilters((prev) => ({ ...prev, programCode: 'all' }))
+                      }
+                      aria-label="Yo‘nalish filtrini olib tashlash"
+                      className="hover:text-rose-700 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+                {filters.query !== '' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EFE6] border border-[#D6D0C4] text-[#041E41] font-semibold">
+                    <span>Qidiruv: «{filters.query}»</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFilters((prev) => ({ ...prev, query: '' }))
+                      }
+                      aria-label="Qidiruv so‘zini tozalash"
+                      className="hover:text-rose-700 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Collapsible Filter Panel */}
-        {showAdvanced && (
-          <div className="bg-[#F3EFE6] border border-[#E5DEC9] rounded-xl p-5 mb-8 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label
-                  htmlFor="filter-faculty"
-                  className="block text-xs font-semibold text-[#0F2342] mb-1.5"
-                >
-                  {t.facultyLabel}
-                </label>
-                <select
-                  id="filter-faculty"
-                  value={filters.faculty}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      faculty: e.target.value as FacultyId,
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
-                >
-                  {faculties.map((f) => (
-                    <option key={f} value={f}>
-                      {FACULTY_LABELS[f][lang]}
+          {/* Collapsible Advanced Filter Panel */}
+          {showAdvanced && (
+            <div className="bg-[#F3EFE6] border border-[#E5DEC9] rounded-xl p-4 sm:p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label
+                    htmlFor="filter-faculty"
+                    className="block text-xs font-semibold text-[#0F2342] mb-1.5"
+                  >
+                    {t.facultyLabel}
+                  </label>
+                  <select
+                    id="filter-faculty"
+                    value={filters.faculty}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        faculty: e.target.value as FacultyId,
+                      }))
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
+                  >
+                    {faculties.map((f) => (
+                      <option key={f} value={f}>
+                        {FACULTY_LABELS[f][lang]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="filter-program"
+                    className="block text-xs font-semibold text-[#0F2342] mb-1.5"
+                  >
+                    {t.programLabel}
+                  </label>
+                  <select
+                    id="filter-program"
+                    value={filters.programCode}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        programCode: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
+                  >
+                    <option value="all">
+                      {lang === 'ru'
+                        ? 'Все направления (20)'
+                        : lang === 'en'
+                        ? 'All Programs (20)'
+                        : 'Barcha yo‘nalishlar (20)'}
                     </option>
-                  ))}
-                </select>
-              </div>
+                    {TUAF_OFFICIAL_PROGRAMS.map((prog) => (
+                      <option key={prog.code} value={prog.code}>
+                        {prog.name[lang]} ({prog.code.split('-')[0]})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label
-                  htmlFor="filter-program"
-                  className="block text-xs font-semibold text-[#0F2342] mb-1.5"
-                >
-                  {t.programLabel}
-                </label>
-                <select
-                  id="filter-program"
-                  value={filters.programCode}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      programCode: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
-                >
-                  <option value="all">
-                    {lang === 'ru'
-                      ? 'Все направления (20)'
-                      : lang === 'en'
-                      ? 'All Programs (20)'
-                      : 'Barcha yo‘nalishlar (20)'}
-                  </option>
-                  {TUAF_OFFICIAL_PROGRAMS.map((prog) => (
-                    <option key={prog.code} value={prog.code}>
-                      {prog.name[lang]} ({prog.code.split('-')[0]})
+                <div>
+                  <label
+                    htmlFor="filter-type"
+                    className="block text-xs font-semibold text-[#0F2342] mb-1.5"
+                  >
+                    {t.resourceTypeLabel}
+                  </label>
+                  <select
+                    id="filter-type"
+                    value={filters.type}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        type: e.target.value as ResourceType | 'all',
+                      }))
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
+                  >
+                    {resourceTypes.map((rt) => (
+                      <option key={rt} value={rt}>
+                        {RESOURCE_TYPE_LABELS[rt][lang]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="filter-sort"
+                    className="block text-xs font-semibold text-[#0F2342] mb-1.5"
+                  >
+                    {t.sortByLabel}
+                  </label>
+                  <select
+                    id="filter-sort"
+                    value={filters.sortBy}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        sortBy: e.target.value as CatalogFilterState['sortBy'],
+                      }))
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
+                  >
+                    <option value="relevance">
+                      {lang === 'ru'
+                        ? 'По актуальности'
+                        : lang === 'en'
+                        ? 'Recommended First'
+                        : 'Tavsiya etilganlar'}
                     </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="filter-type"
-                  className="block text-xs font-semibold text-[#0F2342] mb-1.5"
-                >
-                  {t.resourceTypeLabel}
-                </label>
-                <select
-                  id="filter-type"
-                  value={filters.type}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      type: e.target.value as ResourceType | 'all',
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
-                >
-                  {resourceTypes.map((rt) => (
-                    <option key={rt} value={rt}>
-                      {RESOURCE_TYPE_LABELS[rt][lang]}
+                    <option value="citations-desc">
+                      {lang === 'ru'
+                        ? 'По цитируемости'
+                        : lang === 'en'
+                        ? 'Most Cited'
+                        : 'Ko‘p iqtibos olinganlar'}
                     </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="filter-sort"
-                  className="block text-xs font-semibold text-[#0F2342] mb-1.5"
-                >
-                  {t.sortByLabel}
-                </label>
-                <select
-                  id="filter-sort"
-                  value={filters.sortBy}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      sortBy: e.target.value as CatalogFilterState['sortBy'],
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-xs bg-white border border-[#E5DEC9] rounded-lg text-[#1C1917]"
-                >
-                  <option value="relevance">
-                    {lang === 'ru'
-                      ? 'По актуальности'
-                      : lang === 'en'
-                      ? 'Recommended First'
-                      : 'Tavsiya etilganlar'}
-                  </option>
-                  <option value="citations-desc">
-                    {lang === 'ru'
-                      ? 'По цитируемости'
-                      : lang === 'en'
-                      ? 'Most Cited'
-                      : 'Ko‘p iqtibos olinganlar'}
-                  </option>
-                  <option value="year-desc">
-                    {lang === 'ru'
-                      ? 'Сначала новые'
-                      : lang === 'en'
-                      ? 'Newest First'
-                      : 'Yangi nashrlar'}
-                  </option>
-                  <option value="title-asc">
-                    {lang === 'ru'
-                      ? 'По алфавиту (А–Я)'
-                      : lang === 'en'
-                      ? 'Alphabetical (A–Z)'
-                      : 'Alifbo bo‘yicha (A–Z)'}
-                  </option>
-                </select>
+                    <option value="year-desc">
+                      {lang === 'ru'
+                        ? 'Сначала новые'
+                        : lang === 'en'
+                        ? 'Newest First'
+                        : 'Yangi nashrlar'}
+                    </option>
+                    <option value="title-asc">
+                      {lang === 'ru'
+                        ? 'По алфавиту (А–Я)'
+                        : lang === 'en'
+                        ? 'Alphabetical (A–Z)'
+                        : 'Alifbo bo‘yicha (A–Z)'}
+                    </option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Catalog Results Grid with 3D Hardcover Books */}
+        {/* Immediate Filtered Catalog Results Grid right below the Filter Buttons */}
         {filteredResources.length === 0 ? (
           <div className="bg-white border border-[#E5DEC9] rounded-xl p-12 text-center space-y-4">
             <p className="text-xl font-serif-academic font-bold text-[#0F2342]">
@@ -1184,7 +976,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             <button
               type="button"
               onClick={onResetFilters}
-              className="px-4 py-2 text-xs font-semibold bg-[#0F2342] text-[#FBF9F5] rounded-lg hover:bg-[#173461] transition-colors whitespace-nowrap shrink-0"
+              className="px-4 py-2 text-xs font-semibold bg-[#0F2342] text-[#FBF9F5] rounded-lg hover:bg-[#173461] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               {t.resetFilters}
             </button>
@@ -1226,6 +1018,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         <span>
                           {item.pages} {t.pagesUnit}
                         </span>
+                        {item.programCode && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="font-mono-tabular px-1.5 py-0.5 rounded bg-[#F3EFE6] text-[#0F2342] font-semibold">
+                              {item.programCode.split('-')[0]}
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       {/* Title */}
@@ -1326,6 +1126,285 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           </div>
         )}
       </section>
+
+      {/* SECTION 3: Sohalar bo'yicha mashhur kitoblar — 3D Tirik Javon (Living 3D Bookshelf) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="bg-white border border-[#E5DEC9] rounded-2xl p-4 sm:p-6 lg:p-8 space-y-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E5DEC9] pb-4">
+            <div>
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-serif-academic font-bold text-[#0F2342]">
+                {lang === 'ru'
+                  ? 'Популярные учебники по сферам (3D-полка и скачивание PDF)'
+                  : lang === 'en'
+                  ? 'Famous Textbooks by Field (3D Hardcover Shelf & PDF)'
+                  : 'Sohalar bo‘yicha mashhur kitoblar — 3D Kutubxona Javoni'}
+              </h2>
+              <p className="text-xs text-[#57534E] mt-1">
+                {studentProfile
+                  ? `Talaba hisobi faol (${studentProfile.fullName}) — kitobni bosing yoki PDF formatda yuklab oling`
+                  : 'Har bir 3D kitobni ikki betli mutolaa oynasida varaqlab ko‘rishingiz yoki PDF yuklab olishingiz mumkin'}
+              </p>
+            </div>
+            {onNavigateTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateTab('famous-books')}
+                className="text-xs font-semibold text-[#0099B5] hover:underline self-start sm:self-center cursor-pointer"
+              >
+                {lang === 'ru'
+                  ? 'Все популярные книги →'
+                  : lang === 'en'
+                  ? 'View all famous books →'
+                  : 'Barcha mashhur kitoblar →'}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            {FAMOUS_BOOKS.slice(0, 4).map((book, idx) => {
+              const isDownloaded = downloadedIds.has(book.id);
+              return (
+                <div
+                  key={book.id}
+                  style={{ animationDelay: `${idx * 85}ms` }}
+                  className="tuaf-card-interactive tuaf-card-reveal bg-gradient-to-b from-[#FBF9F5] to-[#F3EFE6] border border-[#E5DEC9] rounded-xl overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    {/* 3D Book Standing on Library Oak Pedestal */}
+                    <div className="pt-5 pb-3 px-4 bg-[radial-gradient(circle_at_50%_25%,rgba(197,155,39,0.16),transparent_70%)] flex flex-col items-center">
+                      <Book3DCover
+                        resource={book}
+                        lang={lang}
+                        size="md"
+                        onClick={() => onOpenReader(book)}
+                      />
+                      <div className="w-full h-2.5 rounded-full tuaf-library-shelf-plank mt-1" />
+                    </div>
+
+                    <div className="p-3.5 space-y-1.5">
+                      <div className="text-[11px] font-semibold text-[#B8860B]">
+                        {
+                          FACULTY_LABELS[
+                            book.faculty as Exclude<FacultyId, 'all'>
+                          ][lang]
+                        }
+                      </div>
+                      <h3 className="font-serif-academic font-bold text-[#0F2342] text-sm sm:text-base leading-snug line-clamp-2">
+                        <span className="tuaf-animated-title">
+                          {book.title[lang]}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-[#57534E] truncate">
+                        {book.authors.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 pt-0 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onDownloadPdf(book)}
+                      className="flex-1 py-2 px-2.5 bg-[#0F2342] hover:bg-[#173461] text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      {studentProfile ? (
+                        <Download className="w-3.5 h-3.5 text-[#38BDF8]" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-[#C59B27]" />
+                      )}
+                      <span>
+                        {isDownloaded ? 'Yuklandi (PDF)' : 'PDF yuklash'}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenReader(book)}
+                      className="py-2 px-2.5 bg-white hover:bg-[#F3EFE6] text-[#0F2342] border border-[#E5DEC9] text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      {t.readOnline}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: ARM Oltin Fondi — Interaktiv 3D Kitob Vitrinasi (Museum-Style Curated Exhibition Spotlight) */}
+      {activeSpotlightBook && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 sm:pb-12">
+          <div className="rounded-2xl overflow-hidden border border-[#C59B27]/50 bg-gradient-to-br from-[#041E41] via-[#0A254C] to-[#04162E] text-white shadow-2xl">
+            {/* Top Exhibition Header Bar */}
+            <div className="px-4 sm:px-7 lg:px-10 py-4 sm:py-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#FDE68A] font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-[#C59B27] shrink-0" />
+                  <span>ARM OLTIN FONDI EKSPOZITSIYASI · 3D VITRINA</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif-academic font-bold text-white mt-0.5">
+                  {t.featuredSectionTitle}
+                </h2>
+              </div>
+
+              {/* Interactive Masterpiece Selector Pills */}
+              <div
+                role="tablist"
+                aria-label="Oltin fond vitrinasi kitoblari"
+                className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0"
+              >
+                {spotlightBooks.map((sb, idx) => {
+                  const isCurrent = sb.id === activeSpotlightBook.id;
+                  return (
+                    <button
+                      key={sb.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isCurrent}
+                      onClick={() => setSpotlightIndex(idx)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                        isCurrent
+                          ? 'bg-[#C59B27] text-[#041E41] shadow-md'
+                          : 'bg-white/10 text-stone-200 hover:bg-white/20'
+                      }`}
+                    >
+                      0{idx + 1}.{' '}
+                      {sb.title[lang].length > 24
+                        ? `${sb.title[lang].slice(0, 24)}…`
+                        : sb.title[lang]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Main 12-Column Exhibition Stage */}
+            <div className="p-5 sm:p-7 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+              {/* Left 4 Columns: 3D Hardcover Pedestal Stage */}
+              <div className="lg:col-span-4 flex flex-col items-center justify-center p-5 sm:p-6 rounded-2xl bg-[radial-gradient(circle_at_50%_35%,rgba(197,155,39,0.28),rgba(4,30,65,0.4)_72%)] border border-white/10">
+                <Book3DCover
+                  resource={activeSpotlightBook}
+                  lang={lang}
+                  size="xl"
+                  onClick={() => onOpenReader(activeSpotlightBook)}
+                />
+                {/* Wooden Library Shelf Pedestal with Brass Edge */}
+                <div className="w-full max-w-[260px] h-3.5 rounded-full tuaf-library-shelf-plank mt-2" />
+                <p className="mt-3 text-[11px] font-mono-tabular text-[#FDE68A]/90 text-center">
+                  3D muqovani bosing — ikki betli jonli kitob ochiladi
+                </p>
+              </div>
+
+              {/* Right 8 Columns: Curatorial Details, Chapter Previews & Actions */}
+              <div className="lg:col-span-8 space-y-5">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono-tabular text-[#FDE68A]">
+                  <span>
+                    {RESOURCE_TYPE_LABELS[activeSpotlightBook.type][lang]}
+                  </span>
+                  <span>·</span>
+                  <span>{activeSpotlightBook.year} yil</span>
+                  <span>·</span>
+                  <span>
+                    {activeSpotlightBook.pages} {t.pagesUnit}
+                  </span>
+                  <span>·</span>
+                  <span>UDK {activeSpotlightBook.udc}</span>
+                  <span>·</span>
+                  <span>
+                    {activeSpotlightBook.availableCopies}/
+                    {activeSpotlightBook.totalCopies} {t.copiesAvailable}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif-academic font-bold text-white leading-tight balance-text">
+                    {activeSpotlightBook.title[lang]}
+                  </h3>
+                  <p className="text-sm font-semibold text-[#38BDF8]">
+                    {activeSpotlightBook.authors.join(', ')} —{' '}
+                    <span className="text-stone-300 font-normal">
+                      {activeSpotlightBook.publisher}
+                    </span>
+                  </p>
+                </div>
+
+                {/* Editorial Pull-Quote */}
+                <blockquote className="p-4 rounded-xl bg-white/5 border border-[#C59B27]/35 font-serif-academic italic text-base sm:text-lg text-stone-100 leading-relaxed">
+                  «{activeSpotlightBook.abstract[lang]}»
+                </blockquote>
+
+                {/* Interactive Chapter Preview Strip */}
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-widest text-stone-300 font-semibold">
+                    Ichki boblar mundarijasi (varaqlab o‘qish uchun bosing):
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {activeSpotlightBook.chapters.slice(0, 2).map((ch) => (
+                      <button
+                        key={ch.number}
+                        type="button"
+                        onClick={() => onOpenReader(activeSpotlightBook)}
+                        className="p-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                      >
+                        <span className="text-xs font-medium text-white truncate">
+                          {ch.title[lang]}
+                        </span>
+                        <span className="text-[11px] font-mono-tabular text-[#FDE68A] shrink-0">
+                          Bet {ch.pageStart} →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Primary Action Bar */}
+                <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpenReader(activeSpotlightBook)}
+                    className="px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold bg-[#C59B27] hover:bg-[#d6aa2e] text-[#041E41] rounded-xl flex items-center gap-2 shadow-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Ikki betli kitobni ochish ({t.readOnline})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onDownloadPdf(activeSpotlightBook)}
+                    className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-[#0099B5] hover:bg-[#008199] text-white rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    {studentProfile ? (
+                      <Download className="w-4 h-4" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-[#FDE68A]" />
+                    )}
+                    <span>PDF yuklab olish</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onReserveBook(activeSpotlightBook)}
+                    disabled={reservedIds.has(activeSpotlightBook.id)}
+                    className="px-4 py-2.5 text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    {reservedIds.has(activeSpotlightBook.id)
+                      ? t.reservedState
+                      : t.reserveBook}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenCitation(activeSpotlightBook)}
+                    className="px-3.5 py-2.5 text-xs font-medium bg-white/5 hover:bg-white/15 text-stone-200 border border-white/15 rounded-xl flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  >
+                    <Quote className="w-3.5 h-3.5 text-[#C59B27]" />
+                    <span>{t.citeWork}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
