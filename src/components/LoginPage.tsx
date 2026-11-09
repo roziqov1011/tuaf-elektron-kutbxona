@@ -414,11 +414,11 @@ export function LoginPage({
           <div className="relative z-10 space-y-5">
             {/* Official TUAF Emblem */}
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-full border-2 border-[#C59B27] bg-[#041E41] flex flex-col items-center justify-center shrink-0 shadow-lg">
+              <div className="w-12 h-12 rounded-xl border-2 border-[#C59B27] bg-white p-1 flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
                 <img
                   src={TUAF_OFFICIAL_LOGO}
                   alt="TUAF Logo"
-                  className="w-7 h-7 object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>

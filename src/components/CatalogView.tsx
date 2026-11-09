@@ -118,6 +118,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   }, []);
 
   const handleIframeLoad = () => {
+    setIsYtPlaying(true);
     try {
       ytIframeRef.current?.contentWindow?.postMessage(
         JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
@@ -162,9 +163,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      {/* Official TUAF Video Hero Section adapted from https://tuaf.vercel.app */}
+      {/* Official TUAF Video Hero Section (https://www.youtube.com/watch?v=snzSKADGzqw) */}
       <section className="relative bg-[#041E41] text-white overflow-hidden min-h-[480px] sm:min-h-[560px] lg:min-h-[620px]">
-        {/* Background Video Layer (YouTube snzSKADGzqw + High-Res TUAF Building Poster) */}
+        {/* Background Video Layer (YouTube snzSKADGzqw + High-Res TUAF Building Poster fallback) */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0">
           {!brokenImages['hero-poster'] && (
             <img
@@ -180,12 +181,12 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             ref={ytIframeRef}
             onLoad={handleIframeLoad}
             className={`pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-full min-w-[177.78vh] -translate-x-1/2 -translate-y-1/2 scale-105 transition-opacity duration-700 ${
-              isYtPlaying ? 'opacity-100' : 'opacity-0'
+              isYtPlaying ? 'opacity-95' : 'opacity-85'
             }`}
             src={`${TUAF_HERO_VIDEO_EMBED_URL}&enablejsapi=1`}
             title="Turon Universiteti Andijon filiali rasmiy video lavhasi"
             frameBorder="0"
-            allow="autoplay; encrypted-media"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         </div>

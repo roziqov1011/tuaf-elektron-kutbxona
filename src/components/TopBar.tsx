@@ -88,15 +88,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           }}
           className="flex items-center gap-2.5 sm:gap-3 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#38BDF8] min-w-0"
         >
-          <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/85 bg-[#041E41] flex flex-col items-center justify-center overflow-hidden shadow-md shrink-0">
+          <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 border-[#C59B27] bg-white flex items-center justify-center overflow-hidden shadow-md shrink-0 p-0.5">
             <img
               src={TUAF_OFFICIAL_LOGO}
               alt="Turon University Andijon"
-              className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+              className="w-full h-full object-contain"
             />
-            <span className="text-[5.5px] sm:text-[6px] font-extrabold tracking-widest text-white leading-none -mt-0.5">
-              ANDIJON
-            </span>
           </span>
           <span className="text-base sm:text-xl font-bold tracking-tight text-white font-serif-academic truncate">
             <span className="sm:hidden">Turon · ARM</span>

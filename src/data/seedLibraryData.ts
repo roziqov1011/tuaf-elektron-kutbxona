@@ -19,15 +19,15 @@ export const COVER_SAMARKAND_IMAGE =
 export const LECTURE_SYMPOSIUM_IMAGE =
   '/src/assets/images/lecture_hall_symposium_1794023844213.jpg';
 
-// Official video & brand assets extracted from https://tuaf.vercel.app
+// Official video & brand assets (https://www.youtube.com/watch?v=snzSKADGzqw)
 export const TUAF_HERO_VIDEO_EMBED_URL =
-  'https://www.youtube.com/embed/qtT53xBE3_A?autoplay=1&mute=1&loop=1&playlist=qtT53xBE3_A&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3';
+  'https://www.youtube.com/embed/snzSKADGzqw?autoplay=1&mute=1&loop=1&playlist=snzSKADGzqw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3';
 export const TUAF_HERO_VIDEO_MODAL_URL =
-  'https://www.youtube.com/embed/qtT53xBE3_A?autoplay=1&rel=0&modestbranding=1';
+  'https://www.youtube.com/embed/snzSKADGzqw?autoplay=1&rel=0&modestbranding=1';
 export const TUAF_HERO_VIDEO_POSTER =
   '/src/assets/images/tuaf_video_poster.jpg';
 export const TUAF_OFFICIAL_LOGO =
-  '/src/assets/images/tuaf_official_logo.png';
+  '/assets/aistudio/turon_ver_2_e89a64e3.png';
 
 export const TUAF_OFFICIAL_PROGRAMS: TuafProgram[] = [
   // 12 Bachelor Programs from tuaf.uz
