@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   BookOpen,
-  Compass,
   FileText,
   Globe,
   LampDesk,
@@ -222,19 +221,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Zone 3: Responsive Action Controls (Never overflows on 320px-430px phones) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Student Roadmap (Slide + PDF) Trigger — visible on sm+ in top bar, and in quick strip/drawer on mobile */}
-          {onOpenRoadmapModal && (
-            <button
-              type="button"
-              onClick={onOpenRoadmapModal}
-              aria-label="Talaba yo‘l xaritasi (Slayd va PDF)"
-              className="hidden sm:flex px-2.5 lg:px-3 py-1.5 text-xs font-semibold bg-[#C59B27]/20 hover:bg-[#C59B27]/35 text-[#FDE68A] rounded-full border border-[#C59B27]/70 items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Compass className="w-3.5 h-3.5 text-[#FDE68A] shrink-0" />
-              <span className="hidden md:inline">Yo‘l xaritasi (PDF)</span>
-            </button>
-          )}
-
           {/* Quick Spotlight Search Trigger (Ctrl + K) */}
           {onOpenSpotlightSearch && (
             <button
@@ -372,17 +358,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           );
         })}
-
-        {onOpenRoadmapModal && (
-          <button
-            type="button"
-            onClick={onOpenRoadmapModal}
-            className="sm:hidden px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-[#C59B27] text-[#041E41] flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            <Compass className="w-3 h-3 shrink-0" />
-            <span>Yo‘l xaritasi (PDF)</span>
-          </button>
-        )}
       </div>
 
       {/* Collapsible Mobile & Tablet Full Drawer Menu */}
@@ -391,28 +366,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           aria-label="Mobil navigatsiya menyusi"
           className="xl:hidden border-t border-[#C59B27]/40 bg-[#041E41] px-3.5 sm:px-6 py-4 space-y-4 shadow-2xl max-h-[82vh] overflow-y-auto"
         >
-          {/* Quick Utility Actions Row (Roadmap PDF + Spotlight Search) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {onOpenRoadmapModal && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenRoadmapModal();
-                }}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#C59B27] text-[#041E41] font-extrabold text-xs flex items-center justify-between gap-2 shadow-sm cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <Compass className="w-4 h-4 shrink-0" />
-                  <span>Talaba Yo‘l Xaritasi (Slayd & PDF)</span>
-                </span>
-                <span className="text-[10px] font-mono-tabular px-2 py-0.5 rounded bg-[#041E41]/15">
-                  Yuklab olish
-                </span>
-              </button>
-            )}
-
-            {onOpenSpotlightSearch && (
+          {/* Quick Utility Actions Row (Spotlight Search) */}
+          {onOpenSpotlightSearch && (
+            <div>
               <button
                 type="button"
                 onClick={() => {
@@ -429,8 +385,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                   Ctrl+K
                 </span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* All 7 Library Sections Grid */}
           <div className="space-y-1.5">
